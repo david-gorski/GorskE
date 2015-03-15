@@ -25,6 +25,7 @@ public class GorskE {
         try {
             init();
             loop();
+            end();
  
             // Release window and window callbacks
             glfwDestroyWindow(window);
@@ -36,6 +37,9 @@ public class GorskE {
         }
     }
  
+    /**
+     * This is the function responsible initializing glfw and OpenGL
+     */
     private void init() {
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
@@ -85,6 +89,9 @@ public class GorskE {
         glfwShowWindow(window);
     }
  
+    /**
+     * This is the main looping function responsible for running the game
+     */
     private void loop() {
         // This line is critical for LWJGL's interoperation with GLFW's
         // OpenGL context, or any context that is managed externally.
@@ -107,5 +114,9 @@ public class GorskE {
             // invoked during this call.
             glfwPollEvents();
         }
+    }
+    
+    private void end(){
+    	
     }
 }
