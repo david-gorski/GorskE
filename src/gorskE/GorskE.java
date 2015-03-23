@@ -200,10 +200,15 @@ public class GorskE {
           
     	 
     	 for(VAO vao : vaos) {
+    		 // Bind the texture
+    		 GL13.glActiveTexture(GL13.GL_TEXTURE0);
+    		 GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTextureId());
+    		 
              // Bind to the VAO that has all the information about the vertices
              GL30.glBindVertexArray(vao.getVaoId());
              GL20.glEnableVertexAttribArray(0);
              GL20.glEnableVertexAttribArray(1);
+             GL20.glEnableVertexAttribArray(2);
               
              // Bind to the index VBO that has all the information about the order of the vertices
              GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
@@ -237,6 +242,10 @@ public class GorskE {
         GL20.glBindAttribLocation(pId, 0, "in_Position");
         // Color information will be attribute 1
         GL20.glBindAttribLocation(pId, 1, "in_Color");
+        // Normal information will be attribute 2
+        GL20.glBindAttribLocation(pId, 2, "in_Normal");
+        // TextureCoord information will be attribute 3
+        GL20.glBindAttribLocation(pId, 3, "in_TextureCoord");
          
         GL20.glLinkProgram(pId);
         GL20.glValidateProgram(pId);
