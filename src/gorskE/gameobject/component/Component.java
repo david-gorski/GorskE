@@ -1,6 +1,6 @@
 package gorskE.gameobject.component;
 
-public interface Component extends Cloneable{
+public interface Component{
 		
 	/**
 	 * This method is called every frame of rendering
@@ -15,6 +15,11 @@ public interface Component extends Cloneable{
 	public void physicUpdate();
 	
 	/**
+	 * This method is called when all the VAO's are cleared and are needed to be put in again
+	 */
+	public void pushVAO();
+	
+	/**
 	 * This function returns the title of the component
 	 */
 	public String getTitle();
@@ -23,6 +28,4 @@ public interface Component extends Cloneable{
 	 * This function is called when the Component is going to be destroyed
 	 */
 	public void destroy();
-
-	public Component clone();
 }

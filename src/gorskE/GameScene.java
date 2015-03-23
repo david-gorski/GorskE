@@ -5,7 +5,7 @@ import gorskE.gameobject.component.Component;
 
 import java.util.ArrayList;
 
-public class GameScene implements Cloneable{
+public class GameScene{
 	
 	/** The array of all the objects in the scene **/
 	private ArrayList<GameObject> gameObjects;
@@ -58,6 +58,7 @@ public class GameScene implements Cloneable{
 	 * @return true if that GameObject was successfully removed, false if this Scene didnt contain this GameObject
 	 */
 	public boolean removeGameObject(GameObject gameobject){
+		gameobject.destroy();
 		if(gameObjects.contains(gameobject)){
 			gameObjects.remove(gameobject);
 			return true;
@@ -65,13 +66,35 @@ public class GameScene implements Cloneable{
 			return false;
 		}
 	}
-	
-	public GameScene clone(){
-		ArrayList<GameObject> newGameObjects = new ArrayList<GameObject>();
+
+	public void update() {
 		for(GameObject go : gameObjects){
-			newGameObjects.add(go.clone());
+			for(Component comp : go.getComponents()){
+				comp.update();
+			}
 		}
-		return new GameScene(newGameObjects);
+	}
+	
+	public void physicUpdate() {
+		for(GameObject go : gameObjects){
+			for(Component comp : go.getComponents()){
+				comp.physicUpdate();
+			}
+		}
+	}
+	
+	public void pushVAO() {
+		for(GameObject go : gameObjects){
+			for(Component comp : go.getComponents()){
+				comp.pushVAO();
+			}
+		}
+	}
+	
+	public void destroy() {
+		for(GameObject go : gameObjects){
+			go.destroy();
+		}
 	}
 
 }

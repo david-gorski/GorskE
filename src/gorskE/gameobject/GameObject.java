@@ -4,12 +4,12 @@ import gorskE.gameobject.component.Component;
 
 import java.util.ArrayList;
 
-public class GameObject implements Cloneable{
+public class GameObject{
 	
 	/**
 	 * The position of the GameObject
 	 */
-	private float x, y, z;
+	private float x, y, z, w=1;
 	
 	/** The array of all the components inside this gameobject **/
 	private ArrayList<Component> components = new ArrayList<Component>();
@@ -24,6 +24,13 @@ public class GameObject implements Cloneable{
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+	
+	public GameObject(float x, float y, float z, float w){
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
 	}
 	
 	public GameObject(float x, float y, float z, ArrayList<Component> components){
@@ -55,6 +62,14 @@ public class GameObject implements Cloneable{
 
 	public void setZ(float z) {
 		this.z = z;
+	}
+	
+	public float getW(){
+		return w;
+	}
+	
+	public void setW(float w){
+		this.w = w;
 	}
 	
 	/**
@@ -109,15 +124,6 @@ public class GameObject implements Cloneable{
 			components.remove(indexsToRemove.get(i));
 		}
 		return answer;
-	}
-	
-	
-	public GameObject clone(){
-		ArrayList<Component> newComps = new ArrayList<Component>();
-		for(Component comp : components){
-			newComps.add(comp.clone());
-		}
-		return new GameObject(x,y,z,newComps);
 	}
 
 }

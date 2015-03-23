@@ -3,11 +3,6 @@ package gorskE.physics;
 import gorskE.GameScene;
 
 public class PhysicsEngine implements Runnable{
-	
-    /**
-     * The GameScene before the physics step
-     */
-    private GameScene initialScene;
     
     /**
      * The GameScene that is currently being simulated
@@ -17,12 +12,25 @@ public class PhysicsEngine implements Runnable{
     /** This is only turned false when the physics engine needs to stop **/
     private boolean running = true;
     
+    /**
+     * This will be true after a full step through time in the physics has been completed
+     */
+    private boolean finishedStep = false;
+    
     public PhysicsEngine(GameScene initialScene){
-    	this.initialScene = initialScene;
+    	this.currentScene = initialScene;
     }
     
-    public GameScene getInitialScene(){
-    	return initialScene;
+    public GameScene getCurrentScene(){
+    	return currentScene;
+    }
+    
+    public boolean isDoneWithStep(){
+    	if(finishedStep){
+    		finishedStep = false;
+    		return true;
+    	}
+    	return false;
     }
     
     public void stopPhysicsEngine(){
@@ -35,12 +43,11 @@ public class PhysicsEngine implements Runnable{
 	 */
 	public void run() {
 		while(running){
-			currentScene = initialScene.clone(); //creates a clone of the initial scene to do the physics step on
+			
 			
 			//IMP physcis stuff
 			
-			initialScene = currentScene; //after the physics step is done the old scene is replaced with the updated one 
-			//ALT maybe include a maunal garbage collection call onto the old scene?
+			finishedStep = true;
 		}
 	}
     
