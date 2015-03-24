@@ -5,14 +5,14 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
 import gorskE.IO.VAO;
+import gorskE.IO.VBOUtils;
 import gorskE.IO.load.ShaderLoader;
 import gorskE.IO.load.TextureLoader;
 import gorskE.gameobject.GameObject;
 import gorskE.gameobject.component.RenderStatic2D;
 import gorskE.physics.PhysicsEngine;
+import gorskE.util.Matrix4f;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.nio.ByteBuffer;
  
 
@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class GorskE {
@@ -45,7 +49,7 @@ public class GorskE {
     /**
      * The array of all the currently drawing vertex-array-objects
      */
-    private ArrayList<VAO> vaos;
+    private ArrayList<VAO> vaos = new ArrayList<VAO>();
     
     public void run() {
         System.out.println("Hello LWJGL " + Sys.getVersion() + "!");
@@ -121,14 +125,28 @@ public class GorskE {
         // creates the ContextCapabilities instance and makes the OpenGL
         // bindings available for use.
         GLContext.createFromCurrent();
+        
+        
+        glMatrixMode(GL_PROJECTION);
+		glLoadIdentity(); // Resets any previous projection matrices
+		glOrtho(0, 2, 2, 0, 10, -10);
+		glMatrixMode(GL_MODELVIEW);
+		
+        // Clears color buffers and gives us a nice color background.
+		glClearColor(0.1f, 0.3f, 0.5f, 0.0f);
+		// Enables depth testing which will be important to make sure
+		// triangles are not rendering in front of each other when they
+		// shouldn't be.
+		glEnable(GL_DEPTH_TEST);
+		// Prints out the current OpenGL version to the console.
+		System.out.println("OpenGL: " + glGetString(GL_VERSION));
     }
  
     /**
      * This is the main looping function responsible for running the game
      */
     private void loop() {
-        // Set the clear color
-        glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+
         
         // Load and set up the shader programs
         setupShaders(); 
@@ -142,22 +160,23 @@ public class GorskE {
         
         GameObject temp = new GameObject(0,0,0);
         currentScene.addGameObject(temp);
-        temp.addComponents(new RenderStatic2D(TextureLoader.loadTextureDirect("res/mage1.png")));
+        temp.addComponents(new RenderStatic2D(temp, TextureLoader.loadTextureDirect("res/mage1.png")));
         
         //XXX testing!
  
         //Start physics simulation
-        physicsEngine = new PhysicsEngine(currentScene);
-        new Thread(physicsEngine).start(); //starts the other thread
+      //  physicsEngine = new PhysicsEngine(currentScene);
+      //  new Thread(physicsEngine).start(); //starts the other thread
         
         //MAIN LOGIC IN HERE
         while ( glfwWindowShouldClose(window) == GL_FALSE ) {
         	
-        	if(physicsEngine.isDoneWithStep()){ //if the physics is done simulating
+     //   	if(physicsEngine.isDoneWithStep()){ //if the physics is done simulating
         		vaos.clear();
         		currentScene.pushVAO();
-        	}
+      //  	}
         	
+
         	render();//renders the scene
         	
             // Poll for window events. The key callback above will only be invoked during this call.
@@ -194,44 +213,85 @@ public class GorskE {
      */
     private void render(){
     	 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
-    	 glfwSwapBuffers(window); // swap the color buffers
   
-         GL20.glUseProgram(pId);
-          
+        // GL20.glUseProgram(pId);
+         
+         testDraw();
+         
     	 
     	 for(VAO vao : vaos) {
+    		 int errorCheckValue;
+    		 
+    		 /* Set ortographic projection */
+    		 glMatrixMode(GL_PROJECTION);
+    		 glLoadIdentity();
+    		 glOrtho(-1.6, 1.6, -1f, 1f, 1f, -1f);
+    		 glMatrixMode(GL_MODELVIEW);
+    		
     		 // Bind the texture
-    		 GL13.glActiveTexture(GL13.GL_TEXTURE0);
-    		 GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTextureId());
+    		 GL13.glActiveTexture(GL13.GL_TEXTURE0); //set the current texture to be binded to texture active 0
+    		 GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTextureId()); //bind a texture to texture active 0
+    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    		 
+    		 while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+                 System.out.println("texture" + errorCheckValue);
+                 //System.exit(-1);
+             }
     		 
              // Bind to the VAO that has all the information about the vertices
              GL30.glBindVertexArray(vao.getVaoId());
              GL20.glEnableVertexAttribArray(0);
              GL20.glEnableVertexAttribArray(1);
              GL20.glEnableVertexAttribArray(2);
-              
+             GL20.glEnableVertexAttribArray(3);
+             
+             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+                 System.out.println("vao" + errorCheckValue);
+                 //System.exit(-1);
+             }
              // Bind to the index VBO that has all the information about the order of the vertices
              GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
-              
+
+             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+                 System.out.println("bind" + errorCheckValue);
+                 //System.exit(-1);
+             }
              // Draw the vertices
-             GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL11.GL_UNSIGNED_BYTE, 0);
-              
+             GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL_UNSIGNED_BYTE, 0);
+             
+             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+                 System.out.println("draw" + errorCheckValue);
+                 //System.exit(-1);
+             }
              // Put everything back to default (deselect)
              GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
              GL20.glDisableVertexAttribArray(0);
              GL20.glDisableVertexAttribArray(1);
+             GL20.glDisableVertexAttribArray(2);
+             GL20.glDisableVertexAttribArray(3);
              GL30.glBindVertexArray(0);
+             
+             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+                 System.out.println("end" + errorCheckValue);
+                 //System.exit(-1);
+             }
     	 }
     	 GL20.glUseProgram(0);
+    	 
+    	 glfwSwapBuffers(window); // swap the color buffers
     }
     
     private void setupShaders() {
         int errorCheckValue = GL11.glGetError();
          
         // Load the vertex shader
-        vsId = ShaderLoader.loadShader("src/thequad/vertex.glsl", GL20.GL_VERTEX_SHADER);
+        vsId = ShaderLoader.loadShader("src/gorskE/shaders/vertex.glsl", GL20.GL_VERTEX_SHADER);
         // Load the fragment shader
-        fsId = ShaderLoader.loadShader("src/thequad/fragment.glsl", GL20.GL_FRAGMENT_SHADER);
+        fsId = ShaderLoader.loadShader("src/gorskE/shaders/fragment.glsl", GL20.GL_FRAGMENT_SHADER);
          
         // Create a new shader program that links both shaders
         pId = GL20.glCreateProgram();
@@ -247,17 +307,94 @@ public class GorskE {
         // TextureCoord information will be attribute 3
         GL20.glBindAttribLocation(pId, 3, "in_TextureCoord");
          
+	//	glBindFragDataLocation(pId, 0, "fragColor");
         GL20.glLinkProgram(pId);
         GL20.glValidateProgram(pId);
+        glUseProgram(pId);
+        
+        int uniModel = glGetUniformLocation(pId, "model");
+        Matrix4f model = new Matrix4f();
+        glUniformMatrix4(uniModel, false, model.getBuffer());
+
+        int uniView = glGetUniformLocation(pId, "view");
+        Matrix4f view = new Matrix4f();
+        glUniformMatrix4(uniView, false, view.getBuffer());
+
+        int uniProjection = glGetUniformLocation(pId, "projection");
+        float ratio = 640f / 480f;
+        Matrix4f projection = Matrix4f.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f);
+        glUniformMatrix4(uniProjection, false, projection.getBuffer());
          
         errorCheckValue = GL11.glGetError();
         if (errorCheckValue != GL11.GL_NO_ERROR) {
             System.out.println("ERROR - Could not create the shaders:");
             System.exit(-1);
         }
+        
+        int status = glGetShaderi(vsId, GL_COMPILE_STATUS);
+        if (status != GL_TRUE) {
+            throw new RuntimeException(glGetShaderInfoLog(vsId));
+        }
+        status = glGetShaderi(fsId, GL_COMPILE_STATUS);
+        if (status != GL_TRUE) {
+            throw new RuntimeException(glGetShaderInfoLog(fsId));
+        }
+        
     }
     
     public void addVAO(VAO vao){
     	vaos.add(vao);
+    }
+    
+    public void testDraw() {
+    	glMatrixMode(GL_PROJECTION);
+    	glLoadIdentity();         // Reset the model-view matrix           
+    	glMatrixMode(GL_MODELVIEW);
+    	
+    	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    	glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
+        // Top face (y = 1.0f)
+        // Define vertices in counter-clockwise (CCW) order with normal pointing out
+        glColor3f(0.0f, 1.0f, 0.0f);     // Green
+        glVertex3f( 0.2f, 0.2f, -0.2f);
+        glVertex3f(-0.2f, 0.2f, -0.2f);
+        glVertex3f(-0.2f, 0.2f,  0.2f);
+        glVertex3f( 0.2f, 0.2f,  0.2f);
+    
+        // Bottom face (y = -1.0f)
+        glColor3f(1.0f, 0.5f, 0.0f);     // Orange
+        glVertex3f( 0.2f, -0.2f,  0.2f);
+        glVertex3f(-0.2f, -0.2f,  0.2f);
+        glVertex3f(-0.2f, -0.2f, -0.2f);
+        glVertex3f( 0.2f, -0.2f, -0.2f);
+    
+        // Front face  (z = 1.0f)
+        glColor3f(1.0f, 0.0f, 0.0f);     // Red
+        glVertex3f( 0.2f,  0.2f, 0.2f);
+        glVertex3f(-0.2f,  0.2f, 0.2f);
+        glVertex3f(-0.2f, -0.2f, 0.2f);
+        glVertex3f( 0.2f, -0.2f, 0.2f);
+    
+        // Back face (z = -1.0f)
+        glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
+        glVertex3f( 0.2f, -0.2f, -0.2f);
+        glVertex3f(-0.2f, -0.2f, -0.2f);
+        glVertex3f(-0.2f,  0.2f, -0.2f);
+        glVertex3f( 0.2f,  0.2f, -0.2f);
+    
+        // Left face (x = -1.0f)
+        glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+        glVertex3f(-0.2f,  0.2f,  0.2f);
+        glVertex3f(-0.2f,  0.2f, -0.2f);
+        glVertex3f(-0.2f, -0.2f, -0.2f);
+        glVertex3f(-0.2f, -0.2f,  0.2f);
+    
+        // Right face (x = 1.0f)
+        glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
+        glVertex3f(0.2f,  0.2f, -0.2f);
+        glVertex3f(0.2f,  0.2f,  0.2f);
+        glVertex3f(0.2f, -0.2f,  0.2f);
+        glVertex3f(0.2f, -0.2f, -0.2f);
+     glEnd();  // End of drawing color-cube   
     }
 }

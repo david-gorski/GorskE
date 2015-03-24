@@ -1,16 +1,20 @@
 #version 150 core
 
-in vec4 in_Position;
-in vec4 in_Color;
-in vec4 in_Normal;
+in vec3 in_Position;
+in vec3 in_Color;
+in vec3 in_Normal;
 in vec2 in_TextureCoord;
 
-out vec4 pass_Color;
+out vec3 pass_Color;
 out vec2 pass_TextureCoord;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 void main(void) {
-	gl_Position = in_Position;
-	gl_Normal = in_Normal;
+	mat4 mvp = projection * view * model;
+    gl_Position = mvp * vec4(in_Position, 1.0);
 	
 	pass_Color = in_Color;
 	pass_TextureCoord = in_TextureCoord;

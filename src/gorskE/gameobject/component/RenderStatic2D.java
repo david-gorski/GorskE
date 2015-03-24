@@ -3,63 +3,70 @@ package gorskE.gameobject.component;
 import gorskE.Main;
 import gorskE.IO.Texture;
 import gorskE.IO.VAO;
+import gorskE.IO.VBOUtils;
+import gorskE.gameobject.GameObject;
 
 public class RenderStatic2D implements Component {
 	
-	private float x=0,y=0,z=0,w=0;
+	private GameObject parent;
+	
+	private float x=0,y=0,z=0;
 	
 	private VAO vao;
 	
-	public RenderStatic2D(Texture texture){
+	public RenderStatic2D(GameObject parent, Texture texture){
 		//XXX Testing purposes really, dumby constructor
+		this.parent = parent;
 		  float[] vertices = {
-	                -0.5f, 0.5f, 0f, 1f,
-	                -0.5f, -0.5f, 0f, 1f,
-	                0.5f, -0.5f, 0f, 1f,
-	                0.5f, 0.5f, 0f, 1f
+	                -0.5f, 0.5f, 0f,
+	                -0.5f, -0.5f, 0f,
+	                0.5f, -0.5f, 0f,
+	                0.5f, 0.5f, 0f,
 	        };
 	        float[] colors = {
-	                1f, 0f, 0f, 1f,
+	                1f, 1f, 1f, 1f,
 	                0f, 1f, 0f, 1f,
 	                0f, 0f, 1f, 1f,
 	                1f, 1f, 1f, 1f,
 	        };
 	        float[] normals = {
-	        		0f, 0f, 0f, 0f,
-	                0f, 0f, 0f, 0f,
-	                0f, 0f, 0f, 0f,
-	                0f, 0f, 0f, 0f,
+	        		1f, 1f, 1f,
+	        		1f, 1f, 1f,
+	        		1f, 1f, 1f,
+	        		1f, 1f, 1f,
 	        };
 	        float[] textureCoords = {
 	        		0, 0,
 	        		1, 0,
-	        		0, 1,
 	        		1, 1,
+	        		0, 1,
 	        };
-	        int[] indices = {
+	        byte[] indices = {
 	                0, 1, 2,
 	                2, 3, 0
 	        };
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
 	
-	public RenderStatic2D(float x, float y, float z, float w, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, int[] indices){
+	public RenderStatic2D(GameObject parent, float x, float y, float z, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
+		this.parent = parent;
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		this.w = w;
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
 	
-	public RenderStatic2D(Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, int[] indices){
+	public RenderStatic2D(GameObject parent, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
+		this.parent = parent;
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
 	
 	public void pushVAO(){
+		vao.addPositions(VBOUtils.updatePosition(vao.getPosition(), x,y,z, parent));
 		Main.getEngine().addVAO(vao);
 	}
 	
-	private void createVAO(float[] vertices, float[] colors, float[] normals, float[] textureCoords, int[] indices, Texture texture){
+	private void createVAO(float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices, Texture texture){
 		vao = new VAO(vertices, colors, normals, textureCoords, indices, texture);
 		pushVAO();
 	}

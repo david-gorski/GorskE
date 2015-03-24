@@ -1,5 +1,6 @@
 package gorskE.IO;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -37,11 +38,11 @@ public class VAO {
 	
 	/**
 	 * The amount of individual pieces of data stored for every vertex
-	 * 4 in most cases because things like position are actually (x,y,z,w) and color is (r,g,b,a)
+	 * MAybe change to four because 4 in most cases because things like position are actually (x,y,z,w) and color is (r,g,b,a)
 	 * 
 	 * Although texture coords are only 2 per vertex, go figure
 	 */
-	private static final int dataPerVertex = 4; 
+	private static final int dataPerVertex = 3; 
 	
 	/**
 	 * The attribute list in which the indices are stored in
@@ -68,7 +69,8 @@ public class VAO {
 	 */
 	private float[] position;
 	
-	public VAO(float[] position, float[] color, float[] normal, float[] textureCoord, int[] indices, Texture texture){
+	public VAO(float[] position, float[] color, float[] normal, float[] textureCoord, byte[] indices, Texture texture){
+		this.texture = texture;
 		vaoId = GL30.glGenVertexArrays(); //creates the vertex array in OpenGL
 		vertexCount = position.length/dataPerVertex; //gets the amount of vertices there are
 		indicesCount = indices.length;
@@ -80,13 +82,13 @@ public class VAO {
 		addIndices(indices);
 	}
 	
-	public void addIndices(int[] data){
+	public void addIndices(byte[] data){
 		// Create a new VBO for the indices and select it (bind)
 		int vboId = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
-		IntBuffer buffer = VBOUtils.createIntBuffer(data);
+		ByteBuffer buffer = VBOUtils.createBtyeBuffer(data);
 		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-		GL20.glVertexAttribPointer(indiciesAttributeList, dataPerVertex, GL11.GL_FLOAT, false, 0, 0);
+		GL20.glVertexAttribPointer(indiciesAttributeList, 1, GL11.GL_UNSIGNED_BYTE, false, 0, 0);
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
 		
 		vbos[indiciesAttributeList] = vboId; //sets the vbo for the third position in the attribute lists in vbos
@@ -106,19 +108,19 @@ public class VAO {
 	}
 	
 	public void addTextureCoordinates(float[] data){
-		addFloatVBO(3, data);
+		addFloatVBO(3, data, GL15.GL_STATIC_DRAW, 2);
 	}
 	
 	public void addFloatVBO(int attributeList, float[] data){
-		addFloatVBO(attributeList, data, GL15.GL_STATIC_DRAW);
+		addFloatVBO(attributeList, data, GL15.GL_STATIC_DRAW, dataPerVertex);
 	}
 	
-	public void addFloatVBO(int attributeList, float[] data, int usage){
+	public void addFloatVBO(int attributeList, float[] data, int usage, int perVertex){
 		int vboId = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
 		FloatBuffer buffer = VBOUtils.createFloatBuffer(data);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, usage);
-		GL20.glVertexAttribPointer(attributeList, dataPerVertex, GL11.GL_FLOAT, false, 0, 0);
+		GL20.glVertexAttribPointer(attributeList, perVertex, GL11.GL_FLOAT, false, 0, 0);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
 		vbos[attributeList] = vboId;
 	}

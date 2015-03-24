@@ -9,7 +9,7 @@ public class GameObject{
 	/**
 	 * The position of the GameObject
 	 */
-	private float x, y, z, w=1;
+	private float x, y, z;
 	
 	/** The array of all the components inside this gameobject **/
 	private ArrayList<Component> components = new ArrayList<Component>();
@@ -24,13 +24,6 @@ public class GameObject{
 		this.x = x;
 		this.y = y;
 		this.z = z;
-	}
-	
-	public GameObject(float x, float y, float z, float w){
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.w = w;
 	}
 	
 	public GameObject(float x, float y, float z, ArrayList<Component> components){
@@ -62,14 +55,6 @@ public class GameObject{
 
 	public void setZ(float z) {
 		this.z = z;
-	}
-	
-	public float getW(){
-		return w;
-	}
-	
-	public void setW(float w){
-		this.w = w;
 	}
 	
 	/**

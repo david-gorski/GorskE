@@ -1,14 +1,13 @@
 #version 150 core
 
-uniform sampler2D texture;
-
-in vec4 pass_Color;
+in vec3 pass_Color;
 in vec2 pass_TextureCoord;
 
-out vec4 out_Color;
+out vec4 fragColor;
+
+uniform sampler2D tex;
 
 void main(void) {
-	out_Color = pass_Color;
-	// Override out_Color with our texture pixel
-	out_Color = texture2D(texture, pass_TextureCoord);
+	vec4 textureColor = texture(tex, pass_TextureCoord);
+    fragColor = vec4(pass_Color, 1.0) * textureColor;
 }
