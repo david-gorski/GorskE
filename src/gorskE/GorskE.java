@@ -5,13 +5,10 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
 import gorskE.IO.VAO;
-import gorskE.IO.VBOUtils;
-import gorskE.IO.load.ShaderLoader;
 import gorskE.IO.load.TextureLoader;
 import gorskE.gameobject.GameObject;
 import gorskE.gameobject.component.RenderStatic2D;
 import gorskE.physics.PhysicsEngine;
-import gorskE.util.Matrix4f;
 
 import java.nio.ByteBuffer;
  
@@ -146,10 +143,6 @@ public class GorskE {
      * This is the main looping function responsible for running the game
      */
     private void loop() {
-
-        
-        // Load and set up the shader programs
-        setupShaders(); 
         
         //TODO load in GameScene
         //currentScene = LoadUtil.loadGameSceneFromPath(initalGameScenePath);
@@ -190,23 +183,10 @@ public class GorskE {
      */
     private void end(){
     	currentScene.destroy();
-    	
-        // Delete the shaders
-        GL20.glUseProgram(0);
-        GL20.glDetachShader(pId, vsId);
-        GL20.glDetachShader(pId, fsId);
-         
-        GL20.glDeleteShader(vsId);
-        GL20.glDeleteShader(fsId);
-        GL20.glDeleteProgram(pId);
         
         //destroy the window
         GLFW.nglfwDestroyWindow(0);
 }
-    
-    private int vsId;
-    private int fsId;
-    private int pId;
     
     /**
      * This is called each frame, and is responsible with rendering the scene
@@ -227,7 +207,10 @@ public class GorskE {
     		 glLoadIdentity();
     		 glOrtho(-1.6, 1.6, -1f, 1f, 1f, -1f);
     		 glMatrixMode(GL_MODELVIEW);
-    		
+    		 
+    		 //sets the current program to be used
+    		 GL20.glUseProgram(vao.getShader().getpId());
+    		 
     		 // Bind the texture
     		 GL13.glActiveTexture(GL13.GL_TEXTURE0); //set the current texture to be binded to texture active 0
     		 GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTextureId()); //bind a texture to texture active 0
@@ -247,11 +230,13 @@ public class GorskE {
              GL20.glEnableVertexAttribArray(1);
              GL20.glEnableVertexAttribArray(2);
              GL20.glEnableVertexAttribArray(3);
+             GL20.glEnableVertexAttribArray(4);
              
              while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
                  System.out.println("vao" + errorCheckValue);
                  //System.exit(-1);
              }
+             
              // Bind to the index VBO that has all the information about the order of the vertices
              GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
 
@@ -259,6 +244,7 @@ public class GorskE {
                  System.out.println("bind" + errorCheckValue);
                  //System.exit(-1);
              }
+             
              // Draw the vertices
              GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL_UNSIGNED_BYTE, 0);
              
@@ -267,12 +253,14 @@ public class GorskE {
                  //System.exit(-1);
              }
              // Put everything back to default (deselect)
+             GL20.glUseProgram(vao.getShader().getpId());
              GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
              GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
              GL20.glDisableVertexAttribArray(0);
              GL20.glDisableVertexAttribArray(1);
              GL20.glDisableVertexAttribArray(2);
              GL20.glDisableVertexAttribArray(3);
+             GL20.glDisableVertexAttribArray(4);
              GL30.glBindVertexArray(0);
              
              while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
@@ -283,63 +271,6 @@ public class GorskE {
     	 GL20.glUseProgram(0);
     	 
     	 glfwSwapBuffers(window); // swap the color buffers
-    }
-    
-    private void setupShaders() {
-        int errorCheckValue = GL11.glGetError();
-         
-        // Load the vertex shader
-        vsId = ShaderLoader.loadShader("src/gorskE/shaders/vertex.glsl", GL20.GL_VERTEX_SHADER);
-        // Load the fragment shader
-        fsId = ShaderLoader.loadShader("src/gorskE/shaders/fragment.glsl", GL20.GL_FRAGMENT_SHADER);
-         
-        // Create a new shader program that links both shaders
-        pId = GL20.glCreateProgram();
-        GL20.glAttachShader(pId, vsId);
-        GL20.glAttachShader(pId, fsId);
- 
-        // Position information will be attribute 0
-        GL20.glBindAttribLocation(pId, 0, "in_Position");
-        // Color information will be attribute 1
-        GL20.glBindAttribLocation(pId, 1, "in_Color");
-        // Normal information will be attribute 2
-        GL20.glBindAttribLocation(pId, 2, "in_Normal");
-        // TextureCoord information will be attribute 3
-        GL20.glBindAttribLocation(pId, 3, "in_TextureCoord");
-         
-	//	glBindFragDataLocation(pId, 0, "fragColor");
-        GL20.glLinkProgram(pId);
-        GL20.glValidateProgram(pId);
-        glUseProgram(pId);
-        
-        int uniModel = glGetUniformLocation(pId, "model");
-        Matrix4f model = new Matrix4f();
-        glUniformMatrix4(uniModel, false, model.getBuffer());
-
-        int uniView = glGetUniformLocation(pId, "view");
-        Matrix4f view = new Matrix4f();
-        glUniformMatrix4(uniView, false, view.getBuffer());
-
-        int uniProjection = glGetUniformLocation(pId, "projection");
-        float ratio = 640f / 480f;
-        Matrix4f projection = Matrix4f.orthographic(-ratio, ratio, -1f, 1f, -1f, 1f);
-        glUniformMatrix4(uniProjection, false, projection.getBuffer());
-         
-        errorCheckValue = GL11.glGetError();
-        if (errorCheckValue != GL11.GL_NO_ERROR) {
-            System.out.println("ERROR - Could not create the shaders:");
-            System.exit(-1);
-        }
-        
-        int status = glGetShaderi(vsId, GL_COMPILE_STATUS);
-        if (status != GL_TRUE) {
-            throw new RuntimeException(glGetShaderInfoLog(vsId));
-        }
-        status = glGetShaderi(fsId, GL_COMPILE_STATUS);
-        if (status != GL_TRUE) {
-            throw new RuntimeException(glGetShaderInfoLog(fsId));
-        }
-        
     }
     
     public void addVAO(VAO vao){

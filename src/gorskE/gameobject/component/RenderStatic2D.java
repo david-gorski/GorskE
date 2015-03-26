@@ -5,6 +5,7 @@ import gorskE.IO.Texture;
 import gorskE.IO.VAO;
 import gorskE.IO.VBOUtils;
 import gorskE.gameobject.GameObject;
+import gorskE.shaders.StaticShader;
 
 public class RenderStatic2D implements Component {
 	
@@ -67,7 +68,7 @@ public class RenderStatic2D implements Component {
 	}
 	
 	private void createVAO(float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices, Texture texture){
-		vao = new VAO(vertices, colors, normals, textureCoords, indices, texture);
+		vao = new VAO(vertices, colors, normals, textureCoords, indices, texture, new StaticShader());
 		pushVAO();
 	}
 
@@ -88,6 +89,7 @@ public class RenderStatic2D implements Component {
 
 	@Override
 	public void destroy() {
+		vao.destroy();
 	}
 	
 	public VAO getVAO(){
@@ -96,6 +98,10 @@ public class RenderStatic2D implements Component {
 	
 	public Texture getTexture(){
 		return vao.getTexture();
+	}
+	
+	public GameObject getParent(){
+		return parent;
 	}
 
 }

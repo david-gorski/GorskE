@@ -1,5 +1,7 @@
 package gorskE.gameobject.component;
 
+import gorskE.gameobject.GameObject;
+
 public interface Component{
 		
 	/**
@@ -28,4 +30,10 @@ public interface Component{
 	 * This function is called when the Component is going to be destroyed
 	 */
 	public void destroy();
+	
+	/**
+	 * Used to retrieve the reference to the gameobject that contains this component
+	 * @return the parent gameobject
+	 */
+	public GameObject getParent();
 }

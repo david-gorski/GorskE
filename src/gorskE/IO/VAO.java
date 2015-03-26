@@ -1,5 +1,7 @@
 package gorskE.IO;
 
+import gorskE.shaders.ShaderProgram;
+
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -37,14 +39,6 @@ public class VAO {
 	private Texture texture;
 	
 	/**
-	 * The amount of individual pieces of data stored for every vertex
-	 * MAybe change to four because 4 in most cases because things like position are actually (x,y,z,w) and color is (r,g,b,a)
-	 * 
-	 * Although texture coords are only 2 per vertex, go figure
-	 */
-	private static final int dataPerVertex = 3; 
-	
-	/**
 	 * The attribute list in which the indices are stored in
 	 */
 	private static final int indiciesAttributeList = 4;
@@ -69,12 +63,18 @@ public class VAO {
 	 */
 	private float[] position;
 	
-	public VAO(float[] position, float[] color, float[] normal, float[] textureCoord, byte[] indices, Texture texture){
+	/** 
+	 * The shader program this VAO will utilize
+	 */
+	private ShaderProgram shader;
+	
+	public VAO(float[] position, float[] color, float[] normal, float[] textureCoord, byte[] indices, Texture texture, ShaderProgram shader){
 		this.texture = texture;
 		vaoId = GL30.glGenVertexArrays(); //creates the vertex array in OpenGL
-		vertexCount = position.length/dataPerVertex; //gets the amount of vertices there are
+		vertexCount = position.length/3; //3 is the 
 		indicesCount = indices.length;
 		this.position = position;
+		this.shader = shader;
 		addPositions(position);
 		addColors(color);
 		addNormals(normal);
@@ -96,31 +96,44 @@ public class VAO {
 	
 	public void addPositions(float[] data){
 		position = data;
-		addFloatVBO(0, data);
+		addFloatVBO(0, data, 3);
 	}
 	
 	public void addColors(float[] data){
-		addFloatVBO(1, data);
+		addFloatVBO(1, data, 3);
 	}
 	
 	public void addNormals(float[] data){
-		addFloatVBO(2, data);
+		addFloatVBO(2, data, 3);
 	}
 	
 	public void addTextureCoordinates(float[] data){
-		addFloatVBO(3, data, GL15.GL_STATIC_DRAW, 2);
+		addFloatVBO(3, data, 2);
 	}
 	
-	public void addFloatVBO(int attributeList, float[] data){
+	/**
+	 * Creates a new float buffer object in opengl and binds it to the provided attribute list in this vao
+	 * Default usage is GL_STATIC_DRAW
+	 * @param attributeList The index of the attributelist which this data should go into
+	 * @param data The data to be put into the buffer object
+	 */
+	public void addFloatVBO(int attributeList, float[] data, int dataPerVertex){
 		addFloatVBO(attributeList, data, GL15.GL_STATIC_DRAW, dataPerVertex);
 	}
 	
-	public void addFloatVBO(int attributeList, float[] data, int usage, int perVertex){
+	/**
+	 * Creates a new float buffer object in opengl and binds it to the provided attribute list in this vao
+	 * @param attributeList The index of the attributelist which this data should go into
+	 * @param data The data to be put into the buffer object
+	 * @param usage This represents how the data should be handled, whether it will be changed a lot or not
+	 * @param dataPerVertex The amount of individual data points that are used to represent each vertex
+	 */
+	public void addFloatVBO(int attributeList, float[] data, int usage, int dataPerVertex){
 		int vboId = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
 		FloatBuffer buffer = VBOUtils.createFloatBuffer(data);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, usage);
-		GL20.glVertexAttribPointer(attributeList, perVertex, GL11.GL_FLOAT, false, 0, 0);
+		GL20.glVertexAttribPointer(attributeList, dataPerVertex, GL11.GL_FLOAT, false, 0, 0);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
 		vbos[attributeList] = vboId;
 	}
@@ -142,10 +155,6 @@ public class VAO {
 	
 	public int getInidicesId(){
 		return vbos[indiciesAttributeList]; //returns the fourth attribute list vbo id because that is where the indices are supposed to be stored
-	}
-
-	public int getDataPerVertex() {
-		return dataPerVertex;
 	}
 	
 	public float[] getPosition(){
@@ -175,5 +184,9 @@ public class VAO {
 	public void setTexture(Texture newTexture){
 		texture = newTexture;
 	}
-	
+
+	public ShaderProgram getShader() {
+		return shader;
+	}
+
 }
