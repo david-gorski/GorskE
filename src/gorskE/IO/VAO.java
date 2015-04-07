@@ -1,10 +1,11 @@
 package gorskE.IO;
 
 import gorskE.shaders.ShaderProgram;
+import gorskE.util.VBOUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.util.ArrayList;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -20,8 +21,6 @@ import org.lwjgl.opengl.GL30;
  * 1 is vertex color data
  * 2 is vertex normal vector data
  * 3 is texture coordinates
- * 4 is the indices data
- * 
  * 
  * @author David
  *
@@ -32,16 +31,6 @@ public class VAO {
 	 * The openGL id for this instance of the VAO
 	 */
 	private int vaoId;
-	
-	/**
-	 * The texture used for this VAO
-	 */
-	private Texture texture;
-	
-	/**
-	 * The attribute list in which the indices are stored in
-	 */
-	private static final int indiciesAttributeList = 4;
 
 	/**
 	 * The array of vboId's that fill each of the 16 possible attribute lists in a VAO
@@ -63,35 +52,24 @@ public class VAO {
 	 */
 	private float[] position;
 	
+	/**
+	 * The indices values of the VAO
+	 */
+	private int indicesVBOID;
+	
 	/** 
 	 * The shader program this VAO will utilize
 	 */
 	private ShaderProgram shader;
 	
-	public VAO(float[] position, float[] color, float[] normal, float[] textureCoord, byte[] indices, Texture texture, ShaderProgram shader){
-		this.texture = texture;
+	public VAO(float[] position, byte[] indices, ShaderProgram shader){
 		vaoId = GL30.glGenVertexArrays(); //creates the vertex array in OpenGL
 		vertexCount = position.length/3; //3 is the 
 		indicesCount = indices.length;
 		this.position = position;
 		this.shader = shader;
 		addPositions(position);
-		addColors(color);
-		addNormals(normal);
-		addTextureCoordinates(textureCoord);
 		addIndices(indices);
-	}
-	
-	public void addIndices(byte[] data){
-		// Create a new VBO for the indices and select it (bind)
-		int vboId = GL15.glGenBuffers();
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
-		ByteBuffer buffer = VBOUtils.createBtyeBuffer(data);
-		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-		GL20.glVertexAttribPointer(indiciesAttributeList, 1, GL11.GL_UNSIGNED_BYTE, false, 0, 0);
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
-		
-		vbos[indiciesAttributeList] = vboId; //sets the vbo for the third position in the attribute lists in vbos
 	}
 	
 	public void addPositions(float[] data){
@@ -100,7 +78,7 @@ public class VAO {
 	}
 	
 	public void addColors(float[] data){
-		addFloatVBO(1, data, 3);
+		addFloatVBO(1, data, 4);
 	}
 	
 	public void addNormals(float[] data){
@@ -138,11 +116,27 @@ public class VAO {
 		vbos[attributeList] = vboId;
 	}
 	
+	public void addIndices(byte[] data){
+		// Create a new VBO for the indices and select it (bind)
+		int vboId = GL15.glGenBuffers();
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
+		ByteBuffer buffer = VBOUtils.createBtyeBuffer(data);
+		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
+		indicesVBOID = vboId;
+	}
+	
 	public void destroy(){
 		unbind();
 	}
 	
 	public void unbind(){
+		GL30.glBindVertexArray(vaoId);
+		for(int i : getActiveAttributes()) {
+			GL20.glDisableVertexAttribArray(i);
+		}
+		GL30.glBindVertexArray(0);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		GL30.glDeleteVertexArrays(vaoId);
 		for(int vboId : vbos){
 			GL15.glDeleteBuffers(vboId);
@@ -154,7 +148,7 @@ public class VAO {
 	}
 	
 	public int getInidicesId(){
-		return vbos[indiciesAttributeList]; //returns the fourth attribute list vbo id because that is where the indices are supposed to be stored
+		return indicesVBOID; 
 	}
 	
 	public float[] getPosition(){
@@ -172,21 +166,32 @@ public class VAO {
 	public int getIndicesCount() {
 		return indicesCount;
 	}
-	
-	public int getTextureId(){
-		return texture.getTextureID();
-	}
-	
-	public Texture getTexture(){
-		return texture;
-	}
-	
-	public void setTexture(Texture newTexture){
-		texture = newTexture;
-	}
 
 	public ShaderProgram getShader() {
 		return shader;
+	}
+	
+	/**
+	 * To clarify this doesnt return an vbo id's, it only returns an array of the indexes of the active attribute lists
+	 * @return an int array of the attribute lists that are active on this vao
+	 */
+	public int[] getActiveAttributes() {
+		int size = 0;
+		for(int i=0; i<vbos.length; i++) {
+			int vboIdAtI = vbos[i];
+			if(vboIdAtI != 0) { //there is a legit vbo at that attribute list
+				size++;
+			}
+		}
+		int[] actives = new int[size];
+		int activesIndex = 0;
+		for(int i=0; i<vbos.length && actives.length>0; i++) {
+			int vboIdAtI = vbos[i];
+			if(vboIdAtI != 0) { //there is a legit vbo at that attribute list
+				actives[activesIndex] = i;
+			}
+		}
+		return actives;
 	}
 
 }

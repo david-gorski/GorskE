@@ -2,6 +2,8 @@ package gorskE;
 
 import gorskE.gameobject.GameObject;
 import gorskE.gameobject.component.Component;
+import gorskE.gameobject.component.PhysicsComponent;
+import gorskE.gameobject.component.RenderComponent;
 
 import java.util.ArrayList;
 
@@ -78,15 +80,10 @@ public class GameScene{
 	public void physicUpdate() {
 		for(GameObject go : gameObjects){
 			for(Component comp : go.getComponents()){
-				comp.physicUpdate();
-			}
-		}
-	}
-	
-	public void pushVAO() {
-		for(GameObject go : gameObjects){
-			for(Component comp : go.getComponents()){
-				comp.pushVAO();
+				if(comp instanceof PhysicsComponent) {
+					PhysicsComponent temp = (PhysicsComponent) comp;
+					temp.physicUpdate();
+				}
 			}
 		}
 	}
@@ -94,6 +91,17 @@ public class GameScene{
 	public void destroy() {
 		for(GameObject go : gameObjects){
 			go.destroy();
+		}
+	}
+
+	public void render() {
+		for(GameObject go : gameObjects){
+			for(Component comp : go.getComponents()){
+				if(comp instanceof RenderComponent) {
+					RenderComponent temp = (RenderComponent) comp;
+					temp.render();
+				}
+			}
 		}
 	}
 

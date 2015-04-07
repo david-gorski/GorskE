@@ -1,107 +1,160 @@
 package gorskE.gameobject.component;
 
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
+import static org.lwjgl.opengl.GL11.GL_PROJECTION;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glLoadIdentity;
+import static org.lwjgl.opengl.GL11.glMatrixMode;
+
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
+
 import gorskE.Main;
 import gorskE.IO.Texture;
 import gorskE.IO.VAO;
-import gorskE.IO.VBOUtils;
 import gorskE.gameobject.GameObject;
 import gorskE.shaders.StaticShader;
+import gorskE.util.VBOUtils;
 
-public class RenderStatic2D implements Component {
-	
-	private GameObject parent;
-	
-	private float x=0,y=0,z=0;
-	
+public class RenderStatic2D extends RenderComponent {
+
 	private VAO vao;
-	
+
+	private Texture texture;
+
 	public RenderStatic2D(GameObject parent, Texture texture){
 		//XXX Testing purposes really, dumby constructor
-		this.parent = parent;
-		  float[] vertices = {
-	                -0.5f, 0.5f, 0f,
-	                -0.5f, -0.5f, 0f,
-	                0.5f, -0.5f, 0f,
-	                0.5f, 0.5f, 0f,
-	        };
-	        float[] colors = {
-	                1f, 1f, 1f, 1f,
-	                0f, 1f, 0f, 1f,
-	                0f, 0f, 1f, 1f,
-	                1f, 1f, 1f, 1f,
-	        };
-	        float[] normals = {
-	        		1f, 1f, 1f,
-	        		1f, 1f, 1f,
-	        		1f, 1f, 1f,
-	        		1f, 1f, 1f,
-	        };
-	        float[] textureCoords = {
-	        		0, 0,
-	        		1, 0,
-	        		1, 1,
-	        		0, 1,
-	        };
-	        byte[] indices = {
-	                0, 1, 2,
-	                2, 3, 0
-	        };
+		super(parent,0,0,0);
+		float[] vertices = {
+				-0.5f, 0.5f, 0f,
+				-0.5f, -0.5f, 0f,
+				0.5f, -0.5f, 0f,
+				0.5f, 0.5f, 0f,
+		};
+		float[] colors = {
+				1f, 1f, 1f, 1f,
+				0f, 1f, 0f, 1f,
+				0f, 0f, 1f, 1f,
+				1f, 1f, 1f, 1f,
+		};
+		float[] normals = {
+				1f, 1f, 1f,
+				1f, 1f, 1f,
+				1f, 1f, 1f,
+				1f, 1f, 1f,
+		};
+		float[] textureCoords = {
+				0, 0,
+				1, 0,
+				1, 1,
+				0, 1,
+		};
+		byte[] indices = {
+				0, 1, 2,
+				2, 3, 0
+		};
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
-	
+
 	public RenderStatic2D(GameObject parent, float x, float y, float z, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
-		this.parent = parent;
-		this.x = x;
-		this.y = y;
-		this.z = z;
+		super(parent,x,y,z);
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
-	
+
 	public RenderStatic2D(GameObject parent, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
-		this.parent = parent;
+		super(parent,0,0,0);
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
-	
-	public void pushVAO(){
-		vao.addPositions(VBOUtils.updatePosition(vao.getPosition(), x,y,z, parent));
-		Main.getEngine().addVAO(vao);
-	}
-	
+
 	private void createVAO(float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices, Texture texture){
-		vao = new VAO(vertices, colors, normals, textureCoords, indices, texture, new StaticShader());
-		pushVAO();
-	}
-
-	@Override
-	public void update() {
-		//I don't think it needs to update anything
-	}
-
-	@Override
-	public void physicUpdate() {
-		//This render based component doesn't do anything in the physics step
+		vao = new VAO(vertices, indices, new StaticShader());
+		vao.addColors(colors);
+		vao.addNormals(normals);
+		vao.addTextureCoordinates(textureCoords);
 	}
 
 	@Override
 	public String getTitle() {
-		return "RenderStatic";
+		return "RenderStatic2D";
 	}
 
 	@Override
 	public void destroy() {
 		vao.destroy();
 	}
-	
+
 	public VAO getVAO(){
 		return vao;
 	}
-	
+
 	public Texture getTexture(){
-		return vao.getTexture();
-	}
-	
-	public GameObject getParent(){
-		return parent;
+		return texture;
 	}
 
+	public int getTextureId(){
+		return texture.getTextureID();
+	}
+
+	/**
+	 * This is called each frame, and is responsible with rendering the scene
+	 */
+	public void render(){
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();         // Reset the model-view matrix           
+		glMatrixMode(GL_MODELVIEW);
+
+		int errorCheckValue;
+		//error checking
+		while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+			System.out.println("before rendering error in opengl: " + errorCheckValue);
+			//System.exit(-1);
+		}
+
+		//sets the current program to be used
+		GL20.glUseProgram(vao.getShader().getpId());
+
+		// Bind the texture
+		int loc = GL20.glGetUniformLocation(vao.getShader().getpId(), "texture");
+		GL20.glUniform1i(loc, 0);
+		GL13.glActiveTexture(GL13.GL_TEXTURE0); //set the current texture to be binded to texture active 0
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getTextureID()); //bind a texture to texture active 0
+
+		// Bind to the VAO that has all the information about the vertices
+		GL30.glBindVertexArray(vao.getVaoId());
+		
+		//active all the currently active attribute lists on this vao
+		int[] activeAttributeLists = vao.getActiveAttributes();
+		for(int i : activeAttributeLists) {
+			GL20.glEnableVertexAttribArray(i);
+		}
+
+
+		// Bind to the index VBO that has all the information about the order of the vertices
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
+
+		GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL11.GL_UNSIGNED_BYTE, 0);
+
+
+		// Put everything back to default (deselect)
+		GL20.glUseProgram(vao.getShader().getpId());
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		for(int i : activeAttributeLists) {
+			GL20.glDisableVertexAttribArray(i);
+		}
+		GL30.glBindVertexArray(0);
+
+		//error checking
+		while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+			System.out.println("rendering error in opengl: " + errorCheckValue);
+			//System.exit(-1);
+		}
+		GL20.glUseProgram(0);
+	}
 }

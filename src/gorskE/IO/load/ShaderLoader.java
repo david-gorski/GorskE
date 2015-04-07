@@ -4,10 +4,13 @@ import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL20.GL_COMPILE_STATUS;
 import static org.lwjgl.opengl.GL20.glGetShaderInfoLog;
 import static org.lwjgl.opengl.GL20.glGetShaderi;
+import gorskE.IO.Texture;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -43,6 +46,7 @@ public class ShaderLoader {
 	        }
 	         
 	        shaderID = GL20.glCreateShader(type);
+	    	System.out.println(shaderSource);
 	        GL20.glShaderSource(shaderID, shaderSource);
 	        GL20.glCompileShader(shaderID);
 	         
@@ -66,9 +70,9 @@ public class ShaderLoader {
         int errorCheckValue = GL11.glGetError();
         
         // Load the vertex shader
-        vId = ShaderLoader.loadShader("src/gorskE/shaders/vertex.glsl", GL20.GL_VERTEX_SHADER);
+        vId = ShaderLoader.loadShader(vertexFilepath, GL20.GL_VERTEX_SHADER);
         // Load the fragment shader
-        fId = ShaderLoader.loadShader("src/gorskE/shaders/fragment.glsl", GL20.GL_FRAGMENT_SHADER);
+        fId = ShaderLoader.loadShader(fragmentFilepath, GL20.GL_FRAGMENT_SHADER);
         int[] bothIds = {vId, fId};
     	if(!loadedShaderPrograms.containsKey(bothIds)) { //checks if the program has already been made that puts these two shaders into one program
 	        // Create a new shader program that links both shaders

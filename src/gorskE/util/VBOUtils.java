@@ -1,8 +1,9 @@
-package gorskE.IO;
+package gorskE.util;
 
 import gorskE.gameobject.GameObject;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -11,8 +12,9 @@ import org.lwjgl.BufferUtils;
 public class VBOUtils {
 	
 	public static FloatBuffer createFloatBuffer(float[] original){
-		FloatBuffer buffer = BufferUtils.createFloatBuffer(original.length);
-		buffer.put(original);
+ 		FloatBuffer buffer = BufferUtils.createFloatBuffer(original.length);
+ 		buffer.put(original);
+		//Wbuffer.rewind();
 		buffer.flip();
 		return buffer;
 	}
@@ -20,6 +22,7 @@ public class VBOUtils {
 	public static ByteBuffer createBtyeBuffer(byte[] original) {
 		ByteBuffer buffer = BufferUtils.createByteBuffer(original.length);
 		buffer.put(original);
+		//buffer.rewind();
 		buffer.flip();
 		return buffer;
 	}
@@ -27,6 +30,7 @@ public class VBOUtils {
 	public static IntBuffer createIntBuffer(int[] original) {
 		IntBuffer buffer = BufferUtils.createIntBuffer(original.length);
 		buffer.put(original);
+		//buffer.rewind();
 		buffer.flip();
 		return buffer;
 	}

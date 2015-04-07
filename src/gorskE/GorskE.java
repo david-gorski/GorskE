@@ -8,11 +8,12 @@ import gorskE.IO.VAO;
 import gorskE.IO.load.TextureLoader;
 import gorskE.gameobject.GameObject;
 import gorskE.gameobject.component.RenderStatic2D;
+import gorskE.gameobject.component.RenderStatic2DColorOnly;
 import gorskE.physics.PhysicsEngine;
+import gorskE.util.VBOUtils;
 
 import java.nio.ByteBuffer;
  
-
 import java.util.ArrayList;
 
 import static org.lwjgl.glfw.Callbacks.*;
@@ -20,7 +21,9 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL21.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -43,11 +46,6 @@ public class GorskE {
      */
     private GameScene currentScene;
  
-    /**
-     * The array of all the currently drawing vertex-array-objects
-     */
-    private ArrayList<VAO> vaos = new ArrayList<VAO>();
-    
     public void run() {
         System.out.println("Hello LWJGL " + Sys.getVersion() + "!");
         try {
@@ -124,10 +122,16 @@ public class GorskE {
         GLContext.createFromCurrent();
         
         
+     // First set the clear color of the screen
+        glClearColor(0, 0, 0, 0);
+     
+        // Now set the projection matrix to orthographic projection
         glMatrixMode(GL_PROJECTION);
-		glLoadIdentity(); // Resets any previous projection matrices
-		glOrtho(0, 2, 2, 0, 10, -10);
-		glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glOrtho(0, 100, 100, 0, 0.01f, 100f);
+        // Now set the modelview matrix
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 		
         // Clears color buffers and gives us a nice color background.
 		glClearColor(0.1f, 0.3f, 0.5f, 0.0f);
@@ -153,7 +157,7 @@ public class GorskE {
         
         GameObject temp = new GameObject(0,0,0);
         currentScene.addGameObject(temp);
-        temp.addComponents(new RenderStatic2D(temp, TextureLoader.loadTextureDirect("res/mage1.png")));
+        temp.addComponents(new RenderStatic2DColorOnly(temp));
         
         //XXX testing!
  
@@ -163,17 +167,16 @@ public class GorskE {
         
         //MAIN LOGIC IN HERE
         while ( glfwWindowShouldClose(window) == GL_FALSE ) {
+        	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the display buffer
+        		
+        	currentScene.update(); //calls the update function on the whole scene
         	
-     //   	if(physicsEngine.isDoneWithStep()){ //if the physics is done simulating
-        		vaos.clear();
-        		currentScene.pushVAO();
-      //  	}
-        	
-
-        	render();//renders the scene
-        	
-            // Poll for window events. The key callback above will only be invoked during this call.
-            glfwPollEvents();
+        	currentScene.render(); //calls the update function on all the renderComponents in the scene
+        		
+        	testDraw(); //XXX test draw to see if working engine!
+        	        	
+            glfwPollEvents(); // Poll for window events. The key callback above will only be invoked during this call.
+            glfwSwapBuffers(window); //swap buffers to put new buffer to display
         }
         end();
     }
@@ -187,95 +190,6 @@ public class GorskE {
         //destroy the window
         GLFW.nglfwDestroyWindow(0);
 }
-    
-    /**
-     * This is called each frame, and is responsible with rendering the scene
-     */
-    private void render(){
-    	 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
-  
-        // GL20.glUseProgram(pId);
-         
-         testDraw();
-         
-    	 
-    	 for(VAO vao : vaos) {
-    		 int errorCheckValue;
-    		 
-    		 /* Set ortographic projection */
-    		 glMatrixMode(GL_PROJECTION);
-    		 glLoadIdentity();
-    		 glOrtho(-1.6, 1.6, -1f, 1f, 1f, -1f);
-    		 glMatrixMode(GL_MODELVIEW);
-    		 
-    		 //sets the current program to be used
-    		 GL20.glUseProgram(vao.getShader().getpId());
-    		 
-    		 // Bind the texture
-    		 GL13.glActiveTexture(GL13.GL_TEXTURE0); //set the current texture to be binded to texture active 0
-    		 GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTextureId()); //bind a texture to texture active 0
-    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    		 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    		 
-    		 while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-                 System.out.println("texture" + errorCheckValue);
-                 //System.exit(-1);
-             }
-    		 
-             // Bind to the VAO that has all the information about the vertices
-             GL30.glBindVertexArray(vao.getVaoId());
-             GL20.glEnableVertexAttribArray(0);
-             GL20.glEnableVertexAttribArray(1);
-             GL20.glEnableVertexAttribArray(2);
-             GL20.glEnableVertexAttribArray(3);
-             GL20.glEnableVertexAttribArray(4);
-             
-             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-                 System.out.println("vao" + errorCheckValue);
-                 //System.exit(-1);
-             }
-             
-             // Bind to the index VBO that has all the information about the order of the vertices
-             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
-
-             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-                 System.out.println("bind" + errorCheckValue);
-                 //System.exit(-1);
-             }
-             
-             // Draw the vertices
-             GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL_UNSIGNED_BYTE, 0);
-             
-             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-                 System.out.println("draw" + errorCheckValue);
-                 //System.exit(-1);
-             }
-             // Put everything back to default (deselect)
-             GL20.glUseProgram(vao.getShader().getpId());
-             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-             GL20.glDisableVertexAttribArray(0);
-             GL20.glDisableVertexAttribArray(1);
-             GL20.glDisableVertexAttribArray(2);
-             GL20.glDisableVertexAttribArray(3);
-             GL20.glDisableVertexAttribArray(4);
-             GL30.glBindVertexArray(0);
-             
-             while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-                 System.out.println("end" + errorCheckValue);
-                 //System.exit(-1);
-             }
-    	 }
-    	 GL20.glUseProgram(0);
-    	 
-    	 glfwSwapBuffers(window); // swap the color buffers
-    }
-    
-    public void addVAO(VAO vao){
-    	vaos.add(vao);
-    }
     
     public void testDraw() {
     	glMatrixMode(GL_PROJECTION);
@@ -327,5 +241,7 @@ public class GorskE {
         glVertex3f(0.2f, -0.2f,  0.2f);
         glVertex3f(0.2f, -0.2f, -0.2f);
      glEnd();  // End of drawing color-cube   
+     
+     GL11.glRotatef(2f, 1f, 1f, 1f);
     }
 }
