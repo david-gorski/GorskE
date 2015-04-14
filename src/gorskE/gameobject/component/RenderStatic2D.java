@@ -1,11 +1,7 @@
 package gorskE.gameobject.component;
 
-import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
 import static org.lwjgl.opengl.GL11.GL_PROJECTION;
-import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glLoadIdentity;
 import static org.lwjgl.opengl.GL11.glMatrixMode;
 
@@ -15,22 +11,23 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
-import gorskE.Main;
 import gorskE.IO.Texture;
 import gorskE.IO.VAO;
 import gorskE.gameobject.GameObject;
 import gorskE.shaders.StaticShader;
-import gorskE.util.VBOUtils;
 
-public class RenderStatic2D extends RenderComponent {
-
-	private VAO vao;
-
-	private Texture texture;
+public class RenderStatic2D extends Component {
+	
+	public VAO vao;
+	
+	public RenderStatic2D(GameObject parent, VAO vao, float x, float y, float z) {
+		super("RenderStatic2D",parent,x,y,z);
+		this.vao = vao;
+	}
 
 	public RenderStatic2D(GameObject parent, Texture texture){
 		//XXX Testing purposes really, dumby constructor
-		super(parent,0,0,0);
+		super("RenderStatic2D",parent,0,0,0);
 		float[] vertices = {
 				-0.5f, 0.5f, 0f,
 				-0.5f, -0.5f, 0f,
@@ -63,12 +60,12 @@ public class RenderStatic2D extends RenderComponent {
 	}
 
 	public RenderStatic2D(GameObject parent, float x, float y, float z, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
-		super(parent,x,y,z);
+		super("RenderStatic2D",parent,x,y,z);
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
 
 	public RenderStatic2D(GameObject parent, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
-		super(parent,0,0,0);
+		super("RenderStatic2D",parent,0,0,0);
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
 
@@ -77,11 +74,6 @@ public class RenderStatic2D extends RenderComponent {
 		vao.addColors(colors);
 		vao.addNormals(normals);
 		vao.addTextureCoordinates(textureCoords);
-	}
-
-	@Override
-	public String getTitle() {
-		return "RenderStatic2D";
 	}
 
 	@Override
@@ -94,11 +86,11 @@ public class RenderStatic2D extends RenderComponent {
 	}
 
 	public Texture getTexture(){
-		return texture;
+		return vao.getTexture();
 	}
 
 	public int getTextureId(){
-		return texture.getTextureID();
+		return vao.getTexture().getTextureID();
 	}
 
 	/**
@@ -123,7 +115,7 @@ public class RenderStatic2D extends RenderComponent {
 		int loc = GL20.glGetUniformLocation(vao.getShader().getpId(), "texture");
 		GL20.glUniform1i(loc, 0);
 		GL13.glActiveTexture(GL13.GL_TEXTURE0); //set the current texture to be binded to texture active 0
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getTextureID()); //bind a texture to texture active 0
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTexture().getTextureID()); //bind a texture to texture active 0
 
 		// Bind to the VAO that has all the information about the vertices
 		GL30.glBindVertexArray(vao.getVaoId());

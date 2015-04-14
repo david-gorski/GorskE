@@ -1,9 +1,6 @@
 package gorskE.gameobject.component;
 
-import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
-import static org.lwjgl.opengl.GL11.GL_PROJECTION;
-import static org.lwjgl.opengl.GL11.glLoadIdentity;
-import static org.lwjgl.opengl.GL11.glMatrixMode;
+import static org.lwjgl.opengl.GL11.*;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -14,12 +11,12 @@ import gorskE.IO.VAO;
 import gorskE.gameobject.GameObject;
 import gorskE.shaders.ColorOnlyShader;
 
-public class RenderStatic2DColorOnly extends RenderComponent{
+public class RenderStatic2DColorOnly extends Component{
 
 	private VAO vao;
 	
 	public RenderStatic2DColorOnly(GameObject parent){
-		super(parent,0,0,0);
+		super("RenderStatic2DColorOnly",parent,0,0,0);
 		//XXX Testing purposes really, dumby constructor
 		  float[] vertices = {
 	                -0.5f, 0.5f, 0f,
@@ -28,10 +25,10 @@ public class RenderStatic2DColorOnly extends RenderComponent{
 	                0.5f, 0.5f, 0f,
 	        };
 	        float[] colors = {
-	                1f, 1f, 1f, 1f,
-	                0f, 1f, 0f, 1f,
-	                0f, 0f, 1f, 1f,
-	                1f, 1f, 1f, 1f,
+	                0.1f, 0.8f, 0.5f, 1f,
+	                0.9f, 0.7f, 0.6f, 1f,
+	                0.8f, 0.6f, 0.7f, 1f,
+	                0.7f, 0.4f, 0.8f, 1f,
 	        };
 	        byte[] indices = {
 	                0, 1, 2,
@@ -41,12 +38,12 @@ public class RenderStatic2DColorOnly extends RenderComponent{
 	}
 	
 	public RenderStatic2DColorOnly(GameObject parent, float x, float y, float z, float[] vertices, float[] colors, byte[] indices){
-		super(parent,x,y,z);
+		super("RenderStatic2DColorOnly",parent,x,y,z);
 		createVAO(vertices, colors, indices);
 	}
 	
 	public RenderStatic2DColorOnly(GameObject parent, float[] vertices, float[] colors, byte[] indices){
-		super(parent,0,0,0);
+		super("RenderStatic2DColorOnly",parent,0,0,0);
 		createVAO(vertices, colors, indices);
 	}
 	
@@ -71,7 +68,7 @@ public class RenderStatic2DColorOnly extends RenderComponent{
 	}
 
 	@Override
-	public void render() {
+	public void renderVAO() {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();         // Reset the model-view matrix           
 		glMatrixMode(GL_MODELVIEW);
@@ -118,6 +115,29 @@ public class RenderStatic2DColorOnly extends RenderComponent{
 		}
 		GL20.glUseProgram(0);
 	}	
+	
+	@Override
+	public void renderImmediate() {
+    	glMatrixMode(GL_PROJECTION);
+    	glLoadIdentity();         // Reset the model-view matrix           
+    	glMatrixMode(GL_MODELVIEW);
+    	
+    	glBegin(GL_TRIANGLES);                // Begin drawing the color triangles
+    	int sizeOfColorVertex = 4;
+    	int sizeOfPositionVertex = 3;
+    	float[] color = vao.getColor();
+    	float[] position = vao.getPosition();
+    	byte[] indices = vao.getIndices();
+    	for(int vertex=0; vertex<vao.getIndicesCount(); vertex++) {
+    		int index = indices[vertex];
+    		int colorStartIndex = 0+(index*sizeOfColorVertex);
+    		glColor4f(color[colorStartIndex], color[colorStartIndex+1], color[colorStartIndex+2], color[colorStartIndex+3]);
+    		int positionStartIndex = 0+(index*sizeOfPositionVertex);
+            glVertex3f(position[positionStartIndex], position[positionStartIndex+1], position[positionStartIndex+2]);
+    	}
+    	glEnd();  // End of drawing color-cube  
+     
+	}
 }
 
 

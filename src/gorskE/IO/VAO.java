@@ -1,11 +1,11 @@
 package gorskE.IO;
 
+import gorskE.GorskE;
 import gorskE.shaders.ShaderProgram;
 import gorskE.util.VBOUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -21,16 +21,40 @@ import org.lwjgl.opengl.GL30;
  * 1 is vertex color data
  * 2 is vertex normal vector data
  * 3 is texture coordinates
+ * 4-16 are yet to be assigned
+ * 
+ * 
+ * There is a variable amount of data per vertex for each type of data
+ * For position there is three pieces so that there is a x, y, and z value for each vertex
+ * 3 for position
+ * 4 for color
+ * 3 for normal
+ * 2 for texture coordinates
  * 
  * @author David
  *
  */
 public class VAO {
 	
+	public static final int positionIndex = 0;
+	public static final int colorIndex = 1;
+	public static final int normalIndex = 2;
+	public static final int textureCoordIndex = 3;
+	
+	public static final int dataPerPositionVertex = 3;
+	public static final int dataPerColorVertex = 4;
+	public static final int dataPerNormalVertex = 3;
+	public static final int dataPerTextureCoordVertex = 2;
+	
 	/**
 	 * The openGL id for this instance of the VAO
 	 */
 	private int vaoId;
+	
+	/**
+	 * The refernce to the Texture of this VAO, null if there is no texture
+	 */
+	private Texture texture;
 
 	/**
 	 * The array of vboId's that fill each of the 16 possible attribute lists in a VAO
@@ -38,19 +62,27 @@ public class VAO {
 	private int[] vbos = new int[16];
 	
 	/**
+	 * This array contains all the information for verticies in this VAO.
+	 * This coorisponds to the attribute lists
+	 * For example vertex position, color, normal, or indicies.
+	 * The data is at specific index values
+	 * 0 is vertex position data
+	 * 1 is vertex color data
+	 * 2 is vertex normal vector data
+	 * 3 is texture coordinates
+	 * 4-16 are yet to be assigned
+	 */
+	private float[][] vertexData = new float[16][];
+	
+	/**
+	 * This is the array of indices used by this VAO
+	 */
+	private byte[] indices;
+	
+	/**
 	 * The amount of vertices that this VAO represents
 	 */
 	private int vertexCount;
-	
-	/**
-	 * The amount of indices that this VAO represents
-	 */
-	private int indicesCount;
-	
-	/**
-	 * The original position values of the VAO
-	 */
-	private float[] position;
 	
 	/**
 	 * The indices values of the VAO
@@ -63,30 +95,58 @@ public class VAO {
 	private ShaderProgram shader;
 	
 	public VAO(float[] position, byte[] indices, ShaderProgram shader){
-		vaoId = GL30.glGenVertexArrays(); //creates the vertex array in OpenGL
-		vertexCount = position.length/3; //3 is the 
-		indicesCount = indices.length;
-		this.position = position;
+		if(!isImmediateMode()) { //VAO enabled stuff here
+			vaoId = GL30.glGenVertexArrays(); //creates the vertex array in OpenGL
+		}
+		vertexCount = position.length/dataPerPositionVertex;
 		this.shader = shader;
 		addPositions(position);
 		addIndices(indices);
 	}
 	
 	public void addPositions(float[] data){
-		position = data;
-		addFloatVBO(0, data, 3);
+		if(!isImmediateMode()) { //VAOs enabled
+			if(isVBOEnabled(positionIndex)) {
+				updateFloatVBO(getPositionVBOId(), positionIndex, data, dataPerPositionVertex);
+			}
+			addFloatVBO(positionIndex, data, dataPerPositionVertex);
+		}
+		vertexData[positionIndex] = data;
 	}
 	
 	public void addColors(float[] data){
-		addFloatVBO(1, data, 4);
+		if(!isImmediateMode()) { //VAOs enabled
+			if(isVBOEnabled(colorIndex)) {
+				updateFloatVBO(getColorVBOId(), colorIndex, data, dataPerColorVertex);
+			}
+			addFloatVBO(colorIndex, data, dataPerColorVertex);
+		}
+		vertexData[colorIndex] = data;
 	}
 	
 	public void addNormals(float[] data){
-		addFloatVBO(2, data, 3);
+		if(!isImmediateMode()) { //VAOs enabled
+			if(isVBOEnabled(normalIndex)) {
+				updateFloatVBO(getNormalVBOId(), normalIndex, data, dataPerNormalVertex);
+			}
+			addFloatVBO(normalIndex, data, dataPerNormalVertex);
+		}
+		vertexData[normalIndex] = data;
 	}
 	
 	public void addTextureCoordinates(float[] data){
-		addFloatVBO(3, data, 2);
+		if(!isImmediateMode()) { //VAOs enabled
+			if(isVBOEnabled(textureCoordIndex)) {
+				updateFloatVBO(getTextureCoordinatesVBOId(), textureCoordIndex, data, dataPerTextureCoordVertex);
+			}
+			addFloatVBO(textureCoordIndex, data, dataPerTextureCoordVertex);
+		}
+		vertexData[textureCoordIndex] = data;
+	}
+	
+	public void addIndices(byte[] data) {
+		this.indices = data;
+		addIndicesVBO(data);
 	}
 	
 	/**
@@ -97,6 +157,10 @@ public class VAO {
 	 */
 	public void addFloatVBO(int attributeList, float[] data, int dataPerVertex){
 		addFloatVBO(attributeList, data, GL15.GL_STATIC_DRAW, dataPerVertex);
+	}
+	
+	public void updateFloatVBO(int vboId, int attributeList, float[] data, int dataPerVertex){
+		updateFloatVBO(vboId, attributeList, data, GL15.GL_STATIC_DRAW, dataPerVertex);
 	}
 	
 	/**
@@ -116,7 +180,7 @@ public class VAO {
 		vbos[attributeList] = vboId;
 	}
 	
-	public void addIndices(byte[] data){
+	public void addIndicesVBO(byte[] data){
 		// Create a new VBO for the indices and select it (bind)
 		int vboId = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
@@ -124,6 +188,20 @@ public class VAO {
 		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
 		indicesVBOID = vboId;
+	}
+	
+	public void updateFloatVBO(int vboId, int attributeList, float[] data, int usage, int dataPerVertex) {
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+		FloatBuffer buffer = VBOUtils.createFloatBuffer(data);
+		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, usage);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+	}
+	
+	public void updateIndicesVBO(int vboId, int attributeList, byte[] data, int dataPerVertex) {
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
+		ByteBuffer buffer = VBOUtils.createBtyeBuffer(data);
+		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
 	}
 	
 	public void destroy(){
@@ -150,10 +228,6 @@ public class VAO {
 	public int getInidicesId(){
 		return indicesVBOID; 
 	}
-	
-	public float[] getPosition(){
-		return position;
-	}
 
 	public int[] getVbos() {
 		return vbos;
@@ -164,11 +238,15 @@ public class VAO {
 	}
 
 	public int getIndicesCount() {
-		return indicesCount;
+		return indices.length;
 	}
 
 	public ShaderProgram getShader() {
 		return shader;
+	}
+	
+	public boolean isImmediateMode() {
+		return GorskE.isImmediateMode;
 	}
 	
 	/**
@@ -193,5 +271,55 @@ public class VAO {
 		}
 		return actives;
 	}
+	
+	private boolean isVBOEnabled(int index) {
+		if(vbos[index] != 0) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Texture getTexture() {
+		return texture;
+	}
 
+	public float[] getPosition() {
+		return vertexData[positionIndex];
+	}
+	
+	public int getPositionVBOId() {
+		return vbos[positionIndex];
+	}
+	
+	public float[] getColor() {
+		return vertexData[colorIndex];
+	}
+	
+	public int getColorVBOId() {
+		return vbos[colorIndex];
+	}
+	
+	public float[] getNormal() {
+		return vertexData[normalIndex];
+	}
+	
+	public int getNormalVBOId() {
+		return vbos[normalIndex];
+	}
+	
+	public float[] getTextureCoordinates() {
+		return vertexData[textureCoordIndex];
+	}
+	
+	public int getTextureCoordinatesVBOId() {
+		return vbos[textureCoordIndex];
+	}
+
+	public byte[] getIndices() {
+		return indices;
+	}
+	
+	public float[][] getAllVertexData() {
+		return vertexData;
+	}
 }

@@ -29,6 +29,8 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 public class GorskE {
     private static final String initalGameScenePath = "res/scenes/main.scene";
+    
+    public static final boolean isImmediateMode = true;
 	
 	// We need to strongly reference callback instances.
     private GLFWErrorCallback errorCallback;
@@ -45,6 +47,13 @@ public class GorskE {
      * The current GameScene being played
      */
     private GameScene currentScene;
+    
+	public static GorskE engine;
+
+	public static void main(String[] args) {
+		engine = new GorskE();
+		engine.run();
+	}
  
     public void run() {
         System.out.println("Hello LWJGL " + Sys.getVersion() + "!");
@@ -173,7 +182,8 @@ public class GorskE {
         	
         	currentScene.render(); //calls the update function on all the renderComponents in the scene
         		
-        	testDraw(); //XXX test draw to see if working engine!
+        	//testDraw();
+        	GL11.glRotatef(2f, 1f, 1f, 1f);//XXX test draw to see if working engine!
         	        	
             glfwPollEvents(); // Poll for window events. The key callback above will only be invoked during this call.
             glfwSwapBuffers(window); //swap buffers to put new buffer to display
