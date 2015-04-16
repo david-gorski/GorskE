@@ -4,6 +4,11 @@ import org.lwjgl.opengl.GL20;
 
 public abstract class ShaderProgram {
 	
+	public static final int vertexAttributeListIndex = 0;
+	public static final int colorAttributeListIndex = 1;
+	public static final int normalAttributeListIndex = 2;
+	public static final int textureCoordinateAttributeListIndex = 3;
+	
 	/** The id for the complete shader program **/
 	protected int pId;
 	

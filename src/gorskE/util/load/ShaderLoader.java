@@ -46,7 +46,6 @@ public class ShaderLoader {
 	        }
 	         
 	        shaderID = GL20.glCreateShader(type);
-	    	System.out.println(shaderSource);
 	        GL20.glShaderSource(shaderID, shaderSource);
 	        GL20.glCompileShader(shaderID);
 	         

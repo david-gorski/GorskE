@@ -19,21 +19,21 @@ import gorskE.renderdata.Texture;
 import gorskE.renderdata.VAO;
 import gorskE.shaders.StaticShader;
 
-public class RenderStatic2D extends Component {
+public class RenderStatic extends Component {
 	
 	public VAO vao;
 	
-	public RenderStatic2D(GameObject parent, VAO vao, float x, float y, float z) {
+	public RenderStatic(GameObject parent, VAO vao, float x, float y, float z) {
 		super("RenderStatic2D",parent,x,y,z);
 		this.vao = vao;
 	}
 
-	public RenderStatic2D(GameObject parent, float x, float y, float z, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
+	public RenderStatic(GameObject parent, float x, float y, float z, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
 		super("RenderStatic2D",parent,x,y,z);
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}
 
-	public RenderStatic2D(GameObject parent, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
+	public RenderStatic(GameObject parent, Texture texture, float[] vertices, float[] colors, float[] normals, float[] textureCoords, byte[] indices){
 		super("RenderStatic2D",parent,0,0,0);
 		createVAO(vertices, colors, normals, textureCoords, indices, texture);
 	}

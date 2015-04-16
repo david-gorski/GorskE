@@ -1,16 +1,18 @@
 package gorskE.renderdata;
 
+import gorskE.GameObject;
 import gorskE.GorskE;
 import gorskE.shaders.ShaderProgram;
-import gorskE.util.math.VBOUtils;
+import gorskE.util.VAOUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
+import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
 
 /**
  * This is the java implementation of the Vertex Array Object used to store VBO's (Vertex Buffer Objects);
@@ -80,6 +82,11 @@ public class VAO {
 	private byte[] indices;
 	
 	/**
+	 * This is the array of positions of vertices that represents this in local space
+	 */
+	private float[] localCoordinatesPosition;
+	
+	/**
 	 * The amount of vertices that this VAO represents
 	 */
 	private int vertexCount;
@@ -96,7 +103,7 @@ public class VAO {
 	
 	public VAO(float[] position, byte[] indices, ShaderProgram shader){
 		if(!isImmediateMode()) { //VAO enabled stuff here
-			vaoId = GL30.glGenVertexArrays(); //creates the vertex array in OpenGL
+			vaoId = glGenVertexArrays(); //creates the vertex array in OpenGL
 		}
 		vertexCount = position.length/dataPerPositionVertex;
 		this.shader = shader;
@@ -119,6 +126,7 @@ public class VAO {
 			addFloatVBO(positionIndex, data, dataPerPositionVertex);
 		}
 		vertexData[positionIndex] = data;
+		localCoordinatesPosition = data;
 	}
 	
 	public void addColors(float[] data){
@@ -163,11 +171,11 @@ public class VAO {
 	 * @param data The data to be put into the buffer object
 	 */
 	public void addFloatVBO(int attributeList, float[] data, int dataPerVertex){
-		addFloatVBO(attributeList, data, GL15.GL_STATIC_DRAW, dataPerVertex);
+		addFloatVBO(attributeList, data, GL_STATIC_DRAW, dataPerVertex);
 	}
 	
 	public void updateFloatVBO(int vboId, int attributeList, float[] data, int dataPerVertex){
-		updateFloatVBO(vboId, attributeList, data, GL15.GL_STATIC_DRAW, dataPerVertex);
+		updateFloatVBO(vboId, attributeList, data, GL_STATIC_DRAW, dataPerVertex);
 	}
 	
 	/**
@@ -178,37 +186,52 @@ public class VAO {
 	 * @param dataPerVertex The amount of individual data points that are used to represent each vertex
 	 */
 	public void addFloatVBO(int attributeList, float[] data, int usage, int dataPerVertex){
-		int vboId = GL15.glGenBuffers();
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-		FloatBuffer buffer = VBOUtils.createFloatBuffer(data);
-		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, usage);
-		GL20.glVertexAttribPointer(attributeList, dataPerVertex, GL11.GL_FLOAT, false, 0, 0);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
-		vbos[attributeList] = vboId;
+		if(!isImmediateMode()) { //VAOs enabled
+			glBindVertexArray(vaoId);
+			int vboId = glGenBuffers();
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			FloatBuffer buffer = VAOUtils.createFloatBuffer(data);
+			glBufferData(GL_ARRAY_BUFFER, buffer, usage);
+			glVertexAttribPointer(attributeList, dataPerVertex, GL_FLOAT, false, 0, 0);
+			glEnableVertexAttribArray(attributeList); //XXX
+			glBindBuffer(GL_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
+			vbos[attributeList] = vboId;
+			glBindVertexArray(0);
+		}
 	}
 	
 	public void addIndicesVBO(byte[] data){
-		// Create a new VBO for the indices and select it (bind)
-		int vboId = GL15.glGenBuffers();
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
-		ByteBuffer buffer = VBOUtils.createBtyeBuffer(data);
-		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
-		indicesVBOID = vboId;
+		if(!isImmediateMode()) { //VAOs enabled
+			// Create a new VBO for the indices and select it (bind)
+			int vboId = glGenBuffers();
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
+			ByteBuffer buffer = VAOUtils.createBtyeBuffer(data);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
+			indicesVBOID = vboId;
+		}
 	}
 	
 	public void updateFloatVBO(int vboId, int attributeList, float[] data, int usage, int dataPerVertex) {
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-		FloatBuffer buffer = VBOUtils.createFloatBuffer(data);
-		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, usage);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		if(!isImmediateMode()) { //VAOs enabled
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			FloatBuffer buffer = VAOUtils.createFloatBuffer(data);
+			glBufferData(GL_ARRAY_BUFFER, buffer, usage);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
 	}
 	
 	public void updateIndicesVBO(int vboId, int attributeList, byte[] data, int dataPerVertex) {
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
-		ByteBuffer buffer = VBOUtils.createBtyeBuffer(data);
-		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
+		if(!isImmediateMode()) { //VAOs enabled
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
+			ByteBuffer buffer = VAOUtils.createBtyeBuffer(data);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect (bind to 0) the VBO
+		}
+	}
+	
+	public void updatePosition(GameObject go, float x, float y, float z) {
+		VAOUtils.updateWorldPosition(this, go, x, y, z);
 	}
 	
 	public void destroy(){
@@ -221,15 +244,15 @@ public class VAO {
 	}
 	
 	public void unbind(){
-		GL30.glBindVertexArray(vaoId);
+		glBindVertexArray(vaoId);
 		for(int i : getActiveAttributes()) {
-			GL20.glDisableVertexAttribArray(i);
+			glDisableVertexAttribArray(i);
 		}
-		GL30.glBindVertexArray(0);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-		GL30.glDeleteVertexArrays(vaoId);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDeleteVertexArrays(vaoId);
 		for(int vboId : vbos){
-			GL15.glDeleteBuffers(vboId);
+			glDeleteBuffers(vboId);
 		}
 	}
 
@@ -334,4 +357,9 @@ public class VAO {
 	public float[][] getAllVertexData() {
 		return vertexData;
 	}
+
+	public float[] getLocalCoordinatesPosition() {
+		return localCoordinatesPosition;
+	}
+	
 }

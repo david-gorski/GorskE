@@ -4,8 +4,13 @@ import org.lwjgl.Sys;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
-import gorskE.component.RenderStatic2DColorOnly;
+import gorskE.component.RenderStatic;
+import gorskE.component.RenderStaticColorOnly;
+import gorskE.input.Input;
 import gorskE.physics.PhysicsEngine;
+import gorskE.shaders.ColorOnlyShader;
+import gorskE.shaders.ShaderProgram;
+import gorskE.util.VAOUtils;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
@@ -24,7 +29,10 @@ import static org.lwjgl.system.MemoryUtil.*;
 public class GorskE {
     private static final String initalGameScenePath = "res/scenes/main.scene";
     
-    public static final boolean isImmediateMode = true;
+    public static final boolean isImmediateMode = false;
+    
+    public static final int WIDTH = 600;
+    public static final int HEIGHT = 600;
 	
 	// We need to strongly reference callback instances.
     private GLFWErrorCallback errorCallback;
@@ -85,9 +93,6 @@ public class GorskE {
         glfwWindowHint(GLFW_VISIBLE, GL_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GL_TRUE); // the window will be resizable
  
-        int WIDTH = 300;
-        int HEIGHT = 300;
- 
         // Create the window
         window = glfwCreateWindow(WIDTH, HEIGHT, "GorskE", NULL, NULL);
         
@@ -95,13 +100,7 @@ public class GorskE {
             throw new RuntimeException("Failed to create the GLFW window");
  
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        glfwSetKeyCallback(window, keyCallback = new GLFWKeyCallback() {
-            @Override
-            public void invoke(long window, int key, int scancode, int action, int mods) {
-                if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
-                    glfwSetWindowShouldClose(window, GL_TRUE); // We will detect this in our rendering loop
-            }
-        });
+        glfwSetKeyCallback(window, keyCallback = new Input());
  
         // Get the resolution of the primary monitor
         ByteBuffer vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -163,14 +162,15 @@ public class GorskE {
         
         //XXX testing the rendering with this code
         
+    	
         currentScene = new GameScene();
         
 		  float[] vertices = {
-	                -0.01f, 0f, 0.01f,
-	                -0.01f, 0f, -0.01f,
-	                0.01f, 0f, 0.01f,
-	                0.01f, 0f, -0.01f,
-	                0f, 0.02f, 0f,
+	                -0.1f, 0f, 0.1f,
+	                -0.1f, 0f, -0.1f,
+	                0.1f, 0f, 0.1f,
+	                0.1f, 0f, -0.1f,
+	                0f, 0.2f, 0f,
 	        };
 	        float[] colors = {
 	                0f, 0f, 1f, 1f,
@@ -199,16 +199,17 @@ public class GorskE {
 	                2, 3, 4,
 	                0, 2, 4,
 	        };
-        
+
         GameObject temp = new GameObject(0,0,0);
         currentScene.addGameObject(temp);
-        temp.addComponents(new RenderStatic2DColorOnly(temp,vertices, colors, indices));
+        temp.addComponents(new RenderStaticColorOnly(temp,vertices, colors, indices));
+        
         
         Random rand = new Random();
         for(int i=0; i<100; i++){
         	GameObject tempT = new GameObject((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f));
             currentScene.addGameObject(tempT);
-            tempT.addComponents(new RenderStatic2DColorOnly(tempT, vertices, colors, indices));
+            tempT.addComponents(new RenderStaticColorOnly(tempT, vertices, colors, indices));
         }
         //XXX testing!
  
@@ -216,10 +217,7 @@ public class GorskE {
         physicsEngine = new PhysicsEngine(currentScene);
         //new Thread(physicsEngine).start(); //starts the other thread XXX
         
-        
-    }
-    
-    
+    } 
     
     /**
      * This is the main looping function responsible for running the game
@@ -233,8 +231,7 @@ public class GorskE {
         	
         	currentScene.render(); //calls the update function on all the renderComponents in the scene
         		
-        	//testDraw(); XXX
-        	GL11.glRotatef(2f, -1f, -1f, 1f);//XXX test draw to see if working engine!
+        	//GL11.glRotatef(2f, -1f, -1f, 1f);//XXX test draw to see if working engine!
         	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//XXX
         	
         	calcFPS(); //Shows the FPS and number of GameObjects in the window's title        	
@@ -309,5 +306,9 @@ public class GorskE {
 
     	// Return the current FPS - doesn't have to be used if you don't want it!
     	return fps;
+    }
+    
+    public long getWindow() {
+    	return window;
     }
 }
