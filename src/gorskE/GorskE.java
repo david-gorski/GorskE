@@ -4,6 +4,7 @@ import org.lwjgl.Sys;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
+import gorskE.camera.MoveableCamera;
 import gorskE.component.RenderStatic;
 import gorskE.component.RenderStaticColorOnly;
 import gorskE.input.Input;
@@ -17,6 +18,8 @@ import java.util.Random;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -24,7 +27,15 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL21.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.opengl.GL31.*;
+import static org.lwjgl.opengl.GL32.*;
+import static org.lwjgl.opengl.GL33.*;
+import static org.lwjgl.opengl.GL40.*;
+import static org.lwjgl.opengl.GL41.*;
+import static org.lwjgl.opengl.GL42.*;
+import static org.lwjgl.opengl.GL43.*;
+import static org.lwjgl.opengl.GL44.*;
+import static org.lwjgl.opengl.GL45.*;
 
 public class GorskE {
     private static final String initalGameScenePath = "res/scenes/main.scene";
@@ -163,7 +174,7 @@ public class GorskE {
         //XXX testing the rendering with this code
         
     	
-        currentScene = new GameScene();
+        currentScene = new GameScene(new MoveableCamera(0,0,0));
         
 		  float[] vertices = {
 	                -0.1f, 0f, 0.1f,
@@ -184,12 +195,14 @@ public class GorskE {
 					1f, 1f, 1f,
 					1f, 1f, 1f,
 					1f, 1f, 1f,
+					1f, 1f, 1f
 			};
 			float[] textureCoords = {
 					0, 0,
 					1, 0,
 					1, 1,
 					0, 1,
+					1, 1,
 			};
 	        byte[] indices = {
 	                0, 1, 3,

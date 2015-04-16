@@ -4,9 +4,14 @@ import gorskE.GameObject;
 import gorskE.GorskE;
 import gorskE.shaders.ShaderProgram;
 import gorskE.util.VAOUtils;
+import gorskE.util.math.Matrix4f;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -100,6 +105,11 @@ public class VAO {
 	 * The shader program this VAO will utilize
 	 */
 	private ShaderProgram shader;
+	
+	/**
+	 * The matrix used in the model-view-projection multiplication scheme to get real world coordinates
+	 */
+	private Matrix4f modelMatrix = new Matrix4f();
 	
 	public VAO(float[] position, byte[] indices, ShaderProgram shader){
 		if(!isImmediateMode()) { //VAO enabled stuff here
@@ -236,26 +246,22 @@ public class VAO {
 	
 	public void destroy(){
 		if(!isImmediateMode()){
-			unbind();
+			glBindVertexArray(vaoId);
+			for(int i : getActiveAttributes()) {
+				glDisableVertexAttribArray(i);
+			}
+			glBindVertexArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glDeleteVertexArrays(vaoId);
+			for(int vboId : vbos){
+				glDeleteBuffers(vboId);
+			}
 		}
 		if(texture!=null){
 			texture.destroy(this);
 		}	
 	}
 	
-	public void unbind(){
-		glBindVertexArray(vaoId);
-		for(int i : getActiveAttributes()) {
-			glDisableVertexAttribArray(i);
-		}
-		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glDeleteVertexArrays(vaoId);
-		for(int vboId : vbos){
-			glDeleteBuffers(vboId);
-		}
-	}
-
 	public int getVaoId() {
 		return vaoId;
 	}
@@ -305,6 +311,87 @@ public class VAO {
 			}
 		}
 		return actives;
+	}
+	
+	/**
+	 * This method uploads the current Model-View-Projection matrix to the shader program
+	 */
+	public void uploadMVP() {
+		//sets the current program to be used
+		GL20.glUseProgram(shader.getpId());
+		
+		//-- Upload matrices
+		// Grab matrices
+		Matrix4f viewMatrix = GorskE.engine.currentScene.camera.getView();
+		Matrix4f projectionMatrix = GorskE.engine.currentScene.camera.getView();
+		Matrix4f modelMatrix = getModelMatrix();
+		Matrix4f MVP = projectionMatrix.multiply(viewMatrix).multiply(modelMatrix);
+		// Upload matrices to the uniform variables
+		glUniformMatrix4fv(shader.getUniform("MVP"), false, MVP.toFloatBuffer());
+		
+		//sets the current program to be used
+		GL20.glUseProgram(0);
+	}
+	
+	/**
+	 * A helpful method to automatically bind the shaderId, texture, indices VBO, and the vaoId, along with enabling the attributes
+	 * This method also uploads the MVP matrix to the shader program
+	 */
+	public void bind() {
+		if(!isImmediateMode()) { //VAO rendering mode is enabled
+			uploadMVP(); //uploads current MVP matrix to shader
+			
+			//sets the current program to be used
+			GL20.glUseProgram(shader.getpId());
+	
+			// Bind to the VAO that has all the information about the vertices
+			GL30.glBindVertexArray(getVaoId());
+			
+			//enable all attribute lists
+			enableAttributes();
+			
+			//bind the indices buffer
+			glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, getInidicesId());
+			
+			if(texture!=null) {
+				texture.bind();
+			}
+		}
+	}
+	
+	/**
+	 * A helpful method to automatically unbind the shaderId, texture, indices VBO, and the vaoId, along with disabling the attributes
+	 */
+	public void unbind() {
+		if(!isImmediateMode()) { //VAO rendering mode is enabled
+			GL20.glUseProgram(0);
+	
+			GL30.glBindVertexArray(0);
+			
+			disableAttributes();
+			
+			glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+			
+			if(texture!=null) {
+				texture.unbind();
+			}
+		}
+	}
+	
+	public void enableAttributes() {
+		//active all the currently active attribute lists on this vao
+		int[] activeAttributeLists = getActiveAttributes();
+		for(int i : activeAttributeLists) {
+			glEnableVertexAttribArray(i);
+		}
+	}
+	
+	public void disableAttributes() {
+		//active all the currently active attribute lists on this vao
+		int[] activeAttributeLists = getActiveAttributes();
+		for(int i : activeAttributeLists) {
+			glDisableVertexAttribArray(i);
+		}
 	}
 	
 	private boolean isVBOEnabled(int index) {
@@ -360,6 +447,14 @@ public class VAO {
 
 	public float[] getLocalCoordinatesPosition() {
 		return localCoordinatesPosition;
+	}
+
+	public Matrix4f getModelMatrix() {
+		return modelMatrix;
+	}
+
+	public void setModelMatrix(Matrix4f model) {
+		this.modelMatrix = model;
 	}
 	
 }

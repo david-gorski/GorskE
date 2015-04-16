@@ -24,10 +24,6 @@ public class GameScene{
 		this.camera = camera;
 	}
 	
-	public GameScene(){
-		camera = new MoveableCamera(0, 0, 0);
-	}
-	
 	public void setCamera(Camera camera){
 		this.camera = camera;
 	}

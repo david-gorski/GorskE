@@ -58,4 +58,12 @@ public class Texture {
 		}
 	}
 	
+	public void bind() {
+		GL11.glBindTexture(target, textureID);
+	}
+	
+	public void unbind() {
+		GL11.glBindTexture(target, 0);
+	}
+	
 }

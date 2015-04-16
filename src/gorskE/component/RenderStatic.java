@@ -23,6 +23,8 @@ public class RenderStatic extends Component {
 	
 	public VAO vao;
 	
+	private float oldX, oldY, oldZ;
+	
 	public RenderStatic(GameObject parent, VAO vao, float x, float y, float z) {
 		super("RenderStatic2D",parent,x,y,z);
 		this.vao = vao;
@@ -62,6 +64,19 @@ public class RenderStatic extends Component {
 	public int getTextureId(){
 		return vao.getTexture().getTextureID();
 	}
+	
+	@Override
+	public void update() {
+		float newX = parent.getX() + super.x;
+		float newY = parent.getY() + super.y;
+		float newZ = parent.getZ() + super.z;
+		if(newZ!=oldZ || newY!=oldY || newX!=oldX) { //if the gameobject has moved since last time move
+			vao.updatePosition(parent, x, y, z);	 // update the VAO's world coordinates
+		}
+		oldZ = newZ;
+		oldY = newY;
+		oldX = newX;
+	}
 
 	/**
 	 * This is called each frame, and is responsible with rendering the scene
@@ -71,53 +86,11 @@ public class RenderStatic extends Component {
 		glLoadIdentity();         // Reset the model-view matrix           
 		glMatrixMode(GL_MODELVIEW);
 
-		int errorCheckValue;
-		//error checking
-		while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-			System.out.println("before rendering error in opengl: " + errorCheckValue);
-			//System.exit(-1);
-		}
-
-		//sets the current program to be used
-		GL20.glUseProgram(vao.getShader().getpId());
-
-		// Bind the texture
-		int loc = GL20.glGetUniformLocation(vao.getShader().getpId(), "texture");
-		GL20.glUniform1i(loc, 0);
-		GL13.glActiveTexture(GL13.GL_TEXTURE0); //set the current texture to be binded to texture active 0
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, vao.getTexture().getTextureID()); //bind a texture to texture active 0
-
-		// Bind to the VAO that has all the information about the vertices
-		GL30.glBindVertexArray(vao.getVaoId());
-		
-		//active all the currently active attribute lists on this vao
-		int[] activeAttributeLists = vao.getActiveAttributes();
-		for(int i : activeAttributeLists) {
-			GL20.glEnableVertexAttribArray(i);
-		}
-
-
-		// Bind to the index VBO that has all the information about the order of the vertices
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
+		vao.bind();
 
 		GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL11.GL_UNSIGNED_BYTE, 0);
 
-
-		// Put everything back to default (deselect)
-		GL20.glUseProgram(vao.getShader().getpId());
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		for(int i : activeAttributeLists) {
-			GL20.glDisableVertexAttribArray(i);
-		}
-		GL30.glBindVertexArray(0);
-
-		//error checking
-		while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-			System.out.println("rendering error in opengl: " + errorCheckValue);
-			//System.exit(-1);
-		}
-		GL20.glUseProgram(0);
+		vao.unbind();
 	}
 	
 	@Override
@@ -142,7 +115,7 @@ public class RenderStatic extends Component {
     		int colorStartIndex = 0+(index*sizeOfColorVertex);
     		GL11.glColor4f(color[colorStartIndex], color[colorStartIndex+1], color[colorStartIndex+2], color[colorStartIndex+3]);
     		int positionStartIndex = 0+(index*sizeOfPositionVertex);
-            GL11.glVertex3f(position[positionStartIndex]+parent.getX(), position[positionStartIndex+1]+parent.getY(), position[positionStartIndex+2]+parent.getZ());
+            GL11.glVertex3f(position[positionStartIndex], position[positionStartIndex+1], position[positionStartIndex+2]);
     		int texCoordStartIndex = 0+(index*sizeOfTexCoordVertex);
             GL11.glTexCoord2f(texCoord[texCoordStartIndex], texCoord[texCoordStartIndex+1]);
             int normalStartIndex = 0+(index*sizeOfNormalVertex);

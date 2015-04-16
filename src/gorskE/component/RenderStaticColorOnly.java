@@ -8,8 +8,10 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import gorskE.GameObject;
+import gorskE.GorskE;
 import gorskE.renderdata.VAO;
 import gorskE.shaders.ColorOnlyShader;
+import gorskE.util.math.Matrix4f;
 
 public class RenderStaticColorOnly extends Component{
 
@@ -62,50 +64,13 @@ public class RenderStaticColorOnly extends Component{
 
 	@Override
 	public void renderVAO() {
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();         // Reset the model-view matrix           
-		glMatrixMode(GL_MODELVIEW);
 
-		int errorCheckValue;
-		//error checking
-		while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-			System.out.println("before rendering error in opengl: " + errorCheckValue);
-			//System.exit(-1);
-		}
-
-		//sets the current program to be used
-		GL20.glUseProgram(vao.getShader().getpId());
-
-		// Bind to the VAO that has all the information about the vertices
-		GL30.glBindVertexArray(vao.getVaoId());
-		
-		//active all the currently active attribute lists on this vao
-		int[] activeAttributeLists = vao.getActiveAttributes();
-		for(int i : activeAttributeLists) {
-			GL20.glEnableVertexAttribArray(i);
-		}
-
-		// Bind to the index VBO that has all the information about the order of the vertices
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vao.getInidicesId());
+		vao.bind();
 
 		GL11.glDrawElements(GL11.GL_TRIANGLES, vao.getIndicesCount(), GL11.GL_UNSIGNED_BYTE, 0);
 
+		vao.unbind();
 
-		// Put everything back to default (deselect)
-		GL20.glUseProgram(0);
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-		for(int i : activeAttributeLists) {
-			GL20.glDisableVertexAttribArray(i);
-		}
-		
-		GL30.glBindVertexArray(0);
-
-		//error checking
-		while ((errorCheckValue = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-			System.out.println("rendering error in opengl: " + errorCheckValue);
-			//System.exit(-1);
-		}
-		GL20.glUseProgram(0);
 	}	
 	
 	@Override
