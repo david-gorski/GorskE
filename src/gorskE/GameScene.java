@@ -1,14 +1,18 @@
 package gorskE;
 
-import gorskE.gameobject.GameObject;
-import gorskE.gameobject.component.Component;
+import gorskE.camera.Camera;
+import gorskE.camera.MoveableCamera;
+import gorskE.component.Component;
 
 import java.util.ArrayList;
 
 public class GameScene{
 	
 	/** The array of all the objects in the scene **/
-	private ArrayList<GameObject> gameObjects;
+	private ArrayList<GameObject> gameObjects = new ArrayList<GameObject>();
+	
+	/** The reference to the camera looking at the game scene currently **/
+	public Camera camera;
 	
 	//Fundamental Constants of the scene 
 	//ALT add more values as physics engine develops
@@ -16,14 +20,17 @@ public class GameScene{
 	private float speedOfLight = 299792458;
 	private float drag = 1.2f;
 	
-	public GameScene(ArrayList<GameObject> gameObjects){
-		this.gameObjects = gameObjects;
+	public GameScene(Camera camera){
+		this.camera = camera;
 	}
 	
 	public GameScene(){
-		this.gameObjects = new ArrayList<GameObject>();
+		camera = new MoveableCamera(0, 0, 0);
 	}
 	
+	public void setCamera(Camera camera){
+		this.camera = camera;
+	}
 	
 	public float getGravity() {
 		return gravity;
@@ -49,7 +56,9 @@ public class GameScene{
 	}
 	
 	public void addGameObject(GameObject gameobject){
-		gameObjects.add(gameobject);
+		if(!gameObjects.contains(gameobject)){
+			gameObjects.add(gameobject);
+		}
 	}
 	
 	/**
@@ -73,6 +82,7 @@ public class GameScene{
 				comp.update();
 			}
 		}
+		camera.update();
 	}
 	
 	public void render() {
@@ -85,6 +95,7 @@ public class GameScene{
 				}
 			}
 		}
+		camera.render();
 	}
 	
 	public void destroy() {

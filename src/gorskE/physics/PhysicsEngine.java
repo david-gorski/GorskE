@@ -1,5 +1,7 @@
 package gorskE.physics;
 
+import com.bulletphysics.dynamics.DynamicsWorld;
+
 import gorskE.GameScene;
 
 public class PhysicsEngine implements Runnable{
@@ -8,6 +10,8 @@ public class PhysicsEngine implements Runnable{
      * The GameScene that is currently being simulated
      */
     private GameScene currentScene;
+    
+    private DynamicsWorld dynamicsWorld;
 
     /** This is only turned false when the physics engine needs to stop **/
     private boolean running = true;
@@ -51,6 +55,8 @@ public class PhysicsEngine implements Runnable{
 		}
 	}
     
-    
+    public void end(){
+    	running=false;
+    }
     
 }
