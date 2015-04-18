@@ -91,7 +91,6 @@ public class GameScene{
 				}
 			}
 		}
-		camera.render();
 	}
 	
 	public void destroy() {

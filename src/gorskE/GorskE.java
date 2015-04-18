@@ -40,10 +40,10 @@ import static org.lwjgl.opengl.GL45.*;
 public class GorskE {
     private static final String initalGameScenePath = "res/scenes/main.scene";
     
-    public static final boolean isImmediateMode = false;
+    public static final boolean isImmediateMode = true;
     
-    public static final int WIDTH = 600;
-    public static final int HEIGHT = 600;
+    public static final int WIDTH = 1280;
+    public static final int HEIGHT = 800;
 	
 	// We need to strongly reference callback instances.
     private GLFWErrorCallback errorCallback;
@@ -176,12 +176,35 @@ public class GorskE {
     	
         currentScene = new GameScene(new MoveableCamera(0,0,0));
         
-		  float[] vertices = {
-	                -0.1f, 0f, 0.1f,
-	                -0.1f, 0f, -0.1f,
-	                0.1f, 0f, 0.1f,
-	                0.1f, 0f, -0.1f,
-	                0f, 0.2f, 0f,
+        //XXX testing!
+ 
+        //Start physics simulation
+        physicsEngine = new PhysicsEngine(currentScene);
+        //new Thread(physicsEngine).start(); //starts the other thread XXX
+        
+    } 
+    
+    /**
+     * This is the main looping function responsible for running the game
+     */
+    private void loop() {
+        //MAIN LOGIC IN HERE
+        while ( glfwWindowShouldClose(window) == GL_FALSE ) {
+        	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the display buffer
+        		
+        	currentScene.update(); //calls the update function on the whole scene
+        	
+        	currentScene.render(); //calls the update function on all the renderComponents in the scene
+        		
+        	//GL11.glRotatef(2f, -1f, -1f, 1f);//XXX test draw to see if working engine!
+        	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//XXX
+        	
+        	float[] vertices = {
+	                -0.01f, 0f, 0.01f,
+	                -0.01f, 0f, -0.01f,
+	                0.01f, 0f, 0.01f,
+	                0.01f, 0f, -0.01f,
+	                0f, 0.02f, 0f,
 	        };
 	        float[] colors = {
 	                0f, 0f, 1f, 1f,
@@ -212,40 +235,12 @@ public class GorskE {
 	                2, 3, 4,
 	                0, 2, 4,
 	        };
-
-        GameObject temp = new GameObject(0,0,0);
-        currentScene.addGameObject(temp);
-        temp.addComponents(new RenderStaticColorOnly(temp,vertices, colors, indices));
-        
-        
-        Random rand = new Random();
-        for(int i=0; i<100; i++){
-        	GameObject tempT = new GameObject((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f));
-            currentScene.addGameObject(tempT);
-            tempT.addComponents(new RenderStaticColorOnly(tempT, vertices, colors, indices));
-        }
-        //XXX testing!
- 
-        //Start physics simulation
-        physicsEngine = new PhysicsEngine(currentScene);
-        //new Thread(physicsEngine).start(); //starts the other thread XXX
-        
-    } 
-    
-    /**
-     * This is the main looping function responsible for running the game
-     */
-    private void loop() {
-        //MAIN LOGIC IN HERE
-        while ( glfwWindowShouldClose(window) == GL_FALSE ) {
-        	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the display buffer
-        		
-        	currentScene.update(); //calls the update function on the whole scene
         	
-        	currentScene.render(); //calls the update function on all the renderComponents in the scene
-        		
-        	//GL11.glRotatef(2f, -1f, -1f, 1f);//XXX test draw to see if working engine!
-        	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//XXX
+        	Random rand = new Random();
+            for(int i=0; i<2; i++){
+            	GameObject tempT = new GameObject((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f));
+                tempT.addComponents(new RenderStaticColorOnly(tempT, vertices, colors, indices));
+            }
         	
         	calcFPS(); //Shows the FPS and number of GameObjects in the window's title        	
             glfwPollEvents(); // Poll for window events. The key callback above will only be invoked during this call.

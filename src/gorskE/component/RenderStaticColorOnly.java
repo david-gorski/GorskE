@@ -75,9 +75,8 @@ public class RenderStaticColorOnly extends Component{
 	
 	@Override
 	public void renderImmediate() {
-    	glMatrixMode(GL_PROJECTION);
-    	glLoadIdentity();         // Reset the model-view matrix           
     	glMatrixMode(GL_MODELVIEW);
+    	glLoadMatrixf(vao.getModelMatrix().multiply(GorskE.engine.currentScene.camera.getView()).toFloatBuffer());
     	
     	glBegin(GL_TRIANGLES);                // Begin drawing the color triangles
     	int sizeOfColorVertex = 4;

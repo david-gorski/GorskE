@@ -1,7 +1,6 @@
 package gorskE.camera;
 
 import gorskE.input.Input;
-import gorskE.util.math.Matrix4f;
 
 public class MoveableCamera extends Camera{
 
@@ -28,6 +27,12 @@ public class MoveableCamera extends Camera{
 		
 		if(Input.isKeyDown(Input.getDown()))
 			super.z += 0.01f;
+		if(Input.isKeyDown(Input.getAction1()))
+			super.xAngle += 1f;
+		if(Input.isKeyDown(Input.getAction2()))
+			super.yAngle += 1f;
+		if(Input.isKeyDown(Input.getAction3()))
+			super.zAngle += 1f;
 		super.update();
 	}
 	

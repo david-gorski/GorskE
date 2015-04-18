@@ -382,6 +382,86 @@ public class Matrix4f {
 		perspective.m33 = 0f;
 		return perspective;
 	}
+	
+	/**
+	 * @param angle the amount of degrees you want this rotational matrix to represent
+	 * @return a rotational matrix that when multiplied will result in a rotation of amount "angle"
+	 */
+	public static Matrix4f rotationalXMatrix(float angle){
+		Matrix4f rotational = new Matrix4f();
+		angle = (float) Math.toRadians(angle);
+		rotational.m00 = 1f;
+		rotational.m01 = 0f;
+		rotational.m02 = 0f;
+		
+		rotational.m10 = 0f;
+		rotational.m11 = (float) Math.cos(angle);
+		rotational.m12 = (float) Math.sin(angle) * -1;
+		
+		rotational.m20 = 0f;
+		rotational.m21 = (float) Math.sin(angle);
+		rotational.m22 = (float) Math.cos(angle);
+		
+		return rotational;
+	}
+	
+	/**
+	 * @param angle the amount of degrees you want this rotational matrix to represent
+	 * @return a rotational matrix that when multiplied will result in a rotation of amount "angle"
+	 */
+	public static Matrix4f rotationalYMatrix(float angle){
+		Matrix4f rotational = new Matrix4f();
+		angle = (float) Math.toRadians(angle);
+		rotational.m00 = (float) Math.cos(angle);
+		rotational.m01 = 0f;
+		rotational.m02 = (float) Math.sin(angle);
+		
+		rotational.m10 = 0f;
+		rotational.m11 = 1f;
+		rotational.m12 = 0f;
+		
+		rotational.m20 = (float) Math.sin(angle) * -1;
+		rotational.m21 = 0f;
+		rotational.m22 = (float) Math.cos(angle);
+		
+		return rotational;
+	}
+	
+	/**
+	 * @param angle the amount of degrees you want this rotational matrix to represent
+	 * @return a rotational matrix that when multiplied will result in a rotation of amount "angle"
+	 */
+	public static Matrix4f rotationalZMatrix(float angle){
+		Matrix4f rotational = new Matrix4f();
+		angle = (float) Math.toRadians(angle);
+		rotational.m00 = (float) Math.cos(angle);
+		rotational.m01 = (float) Math.sin(angle) * -1;
+		rotational.m02 = 0f;
+		
+		rotational.m10 = (float) Math.sin(angle);
+		rotational.m11 = (float) Math.cos(angle);
+		rotational.m12 = 0f;
+		
+		rotational.m20 = 0f;
+		rotational.m21 = 0f;
+		rotational.m22 = 1f;
+		
+		return rotational;
+	}
+	
+	/**
+	 * This function takes in three angles for each axis and rotates the supplied matrix by all three rotational matrices for the given angles
+	 * @param xAngle angle of rotation on the x
+	 * @param yAngle angle of rotation on the y
+	 * @param zAngle angle of rotation on the z
+	 * @param matrix the matrix that will be rotated
+	 */
+	public static void rotate(float xAngle, float yAngle, float zAngle, Matrix4f matrix){
+		matrix = matrix.multiply(rotationalXMatrix(xAngle));
+		matrix = matrix.multiply(rotationalYMatrix(yAngle));
+		matrix = matrix.multiply(rotationalZMatrix(zAngle));
+	}
+
 
 	/**
 	 * Creates a translation matrix. Similar to
@@ -401,43 +481,6 @@ public class Matrix4f {
 		translation.m13 = y;
 		translation.m23 = z;
 		return translation;
-	}
-
-	/**
-	 * Creates a rotation matrix. Similar to
-	 * <code>glRotate(angle, x, y, z)</code>.
-	 *
-	 * @param angle
-	 *            Angle of rotation in degrees
-	 * @param x
-	 *            x coordinate of the rotation vector
-	 * @param y
-	 *            y coordinate of the rotation vector
-	 * @param z
-	 *            z coordinate of the rotation vector
-	 * @return Rotation matrix
-	 */
-	public static Matrix4f rotate(float angle, float x, float y, float z) {
-		Matrix4f rotation = new Matrix4f();
-		float c = (float) Math.cos(Math.toRadians(angle));
-		float s = (float) Math.sin(Math.toRadians(angle));
-		Vector3f vec = new Vector3f(x, y, z);
-		if (vec.length() != 1f) {
-			vec = vec.normalize();
-			x = vec.x;
-			y = vec.y;
-			z = vec.z;
-		}
-		rotation.m00 = x * x * (1f - c) + c;
-		rotation.m10 = y * x * (1f - c) + z * s;
-		rotation.m20 = x * z * (1f - c) - y * s;
-		rotation.m01 = x * y * (1f - c) - z * s;
-		rotation.m11 = y * y * (1f - c) + c;
-		rotation.m21 = y * z * (1f - c) + x * s;
-		rotation.m02 = x * z * (1f - c) + y * s;
-		rotation.m12 = y * z * (1f - c) - x * s;
-		rotation.m22 = z * z * (1f - c) + c;
-		return rotation;
 	}
 
 	/**

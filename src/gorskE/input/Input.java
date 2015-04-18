@@ -17,9 +17,9 @@ import org.lwjgl.glfw.GLFWKeyCallback;
  */
 public class Input extends GLFWKeyCallback{
 	
-	private static int forward = GLFW.GLFW_KEY_UP, backward = GLFW.GLFW_KEY_DOWN, left = GLFW.GLFW_KEY_LEFT, right = GLFW.GLFW_KEY_RIGHT, up  = GLFW.GLFW_KEY_U, down  = GLFW.GLFW_KEY_D;
+	private static int forward = GLFW.GLFW_KEY_UP, backward = GLFW.GLFW_KEY_DOWN, left = GLFW.GLFW_KEY_LEFT, right = GLFW.GLFW_KEY_RIGHT, up  = GLFW.GLFW_KEY_U, down  = GLFW.GLFW_KEY_I;
 	private static int space = GLFW.GLFW_KEY_SPACE;
-	private static int action1 = GLFW.GLFW_KEY_1, action2 = GLFW.GLFW_KEY_2, action3 = GLFW.GLFW_KEY_3, action4 = GLFW.GLFW_KEY_4;
+	private static int action1 = GLFW.GLFW_KEY_W, action2 = GLFW.GLFW_KEY_A, action3 = GLFW.GLFW_KEY_S, action4 = GLFW.GLFW_KEY_D;
 	
     // a boolean array of all our keys.
     public static boolean[] keys = new boolean[65535];

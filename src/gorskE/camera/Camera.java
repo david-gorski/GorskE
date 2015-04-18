@@ -4,7 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.FloatBuffer;
 
-import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 
 import gorskE.GorskE;
 import gorskE.util.math.Matrix4f;
@@ -17,26 +17,33 @@ public abstract class Camera{
 	 */
 	protected float x=0, y=0, z=0;
 	
+	/**
+	 * The rotation of the camera in space
+	 */
+	protected float xAngle=0, yAngle=0, zAngle=0;
+	
+	/**
+	 * The projection matrix used in opengl render calls
+	 * This matrix represents the projection out of the camera (imagine its like what the lens can see)
+	 */
 	protected Matrix4f projection;
+	/**
+	 * The view matrix used in opengl render calls
+	 * This matrix represents the camera's position
+	 */
 	protected Matrix4f view;
 	
-	private float oldX=0, oldY=0, oldZ=0;
-    
-    /**
-     * The rotation of the axis. The X component stands for the rotation along the x-axis,
-     * where 0 is dead ahead, 180 is backwards, and 360 is automically set to 0 (dead ahead). The value must be between
-     * (including) 0 and 360. The Y component stands for the rotation along the y-axis, where 0 is looking straight
-     * ahead, -90 is straight up, and 90 is straight down. The value must be between (including) -90 and 90.
-     */
-	protected Vector3f rotation = new Vector3f(0, 0, 0);
+	private float oldX=0, oldY=0, oldZ=0; //these old variables for knowing when to update the view matrix
+	private float oldXAngle=0, oldYAngle=0, oldZAngle=0;
     
     /** The minimal distance from the camera where objects are rendered. */
 	protected float zNear = 0.1f;
     /** The maximal distance from the camera where objects are rendered. */
 	protected float zFar = 10f;  
 	
-    /** Defines the field of view. */
-	protected int fov = 80; //IMP this dont do nothing yet
+    /** Defines the field of view. **/
+	protected int fov = 80;
+	/** Defines the aspectRatio **/
 	protected float aspectRatio = (float)GorskE.WIDTH / (float)GorskE.HEIGHT;
 
 	public Camera(float x, float y, float z) {
@@ -46,20 +53,51 @@ public abstract class Camera{
 		init();
 	}
 	
+	/**
+	 * Called every frame to update the view matrix based on the position and rotation of the camera
+	 */
 	public void update() {
-		view = Matrix4f.translate(x, y, z); //translate the camera
-		//TODO add the rotation of the view matrix here
+		// Update position and rotation of view matrix //
+		if(oldX!=x || oldY!=y || oldZ!=z){
+			view = view.multiply(Matrix4f.translate(x-oldX, y-oldY, z-oldZ));
+		}
+		if(oldXAngle != xAngle){ //update x rotation if it changed
+			view = view.multiply(Matrix4f.rotationalXMatrix(xAngle-oldXAngle));
+		}
+		if(oldYAngle != yAngle){ //update y rotation if it changed
+			view = view.multiply(Matrix4f.rotationalYMatrix(yAngle-oldYAngle));
+		}
+		if(oldZAngle != zAngle){ //update z rotation if it changed
+			view = view.multiply(Matrix4f.rotationalZMatrix(zAngle-oldZAngle));
+		}
+		setOld(); //sets the old variables to the current variables
 	}
 	
-	public void render(){
-		
-	}
-	
+	/**
+	 * Sets up the matrices (projection and view)
+	 */
 	public void init(){
 		// Setup projection matrix in a perspective mode
 		projection = Matrix4f.perspective(fov, aspectRatio, zNear, zFar);
-		// Setup a new view matrix and translate it over to where it should be XXX maybe wrong
+		if(GorskE.isImmediateMode){//if immediate mode is on
+			glMatrixMode(GL_PROJECTION); //update the fixed function
+			glMultMatrixf(projection.toFloatBuffer()); //pipeline projection matrix
+		}
+		
+		// Setup a new view matrix and translate it over to where it should be by translating and rotatiing it
 		view = Matrix4f.translate(x, y, z);
+		view = view.multiply(Matrix4f.rotationalXMatrix(xAngle));
+		view = view.multiply(Matrix4f.rotationalYMatrix(yAngle));
+		view = view.multiply(Matrix4f.rotationalZMatrix(zAngle));
+	}
+	
+	private void setOld(){
+		oldX = x;
+		oldY = y;
+		oldZ = z;
+		oldZAngle = zAngle;
+		oldYAngle = yAngle;
+		oldXAngle = xAngle;
 	}
 	
 	public float getX() {
@@ -89,12 +127,39 @@ public abstract class Camera{
 		init();
 	}
 
-	public Vector3f getRotation() {
-		return rotation;
+	public float getxAngle() {
+		return xAngle;
 	}
 
-	public void setRotation(Vector3f rotation) {
-		this.rotation = rotation;
+	public void setxAngle(float xAngle) {
+		this.xAngle = xAngle;
+		init();
+	}
+
+	public float getyAngle() {
+		return yAngle;
+	}
+
+	public void setyAngle(float yAngle) {
+		this.yAngle = yAngle;
+		init();
+	}
+
+	public float getzAngle() {
+		return zAngle;
+	}
+
+	public void setzAngle(float zAngle) {
+		this.zAngle = zAngle;
+		init();
+	}
+
+	public float getAspectRatio() {
+		return aspectRatio;
+	}
+
+	public void setAspectRatio(float aspectRatio) {
+		this.aspectRatio = aspectRatio;
 		init();
 	}
 
@@ -131,18 +196,6 @@ public abstract class Camera{
 
 	public Matrix4f getView() {
 		return view;
-	}
-
-	public float getOldX() {
-		return oldX;
-	}
-
-	public float getOldY() {
-		return oldY;
-	}
-
-	public float getOldZ() {
-		return oldZ;
 	}
 
 }
