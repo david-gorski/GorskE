@@ -37,7 +37,7 @@ public abstract class Camera{
 	private float oldXAngle=0, oldYAngle=0, oldZAngle=0;
     
     /** The minimal distance from the camera where objects are rendered. */
-	protected float zNear = 0.1f;
+	protected float zNear = 0.00001f;
     /** The maximal distance from the camera where objects are rendered. */
 	protected float zFar = 10f;  
 	

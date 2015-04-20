@@ -33,6 +33,9 @@ public class MoveableCamera extends Camera{
 			super.yAngle += 1f;
 		if(Input.isKeyDown(Input.getAction3()))
 			super.zAngle += 1f;
+		if(Input.isKeyDown(Input.getAction4())) {
+			//Maybe add in something fun here
+		}
 		super.update();
 	}
 	

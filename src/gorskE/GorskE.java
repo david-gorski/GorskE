@@ -40,7 +40,7 @@ import static org.lwjgl.opengl.GL45.*;
 public class GorskE {
     private static final String initalGameScenePath = "res/scenes/main.scene";
     
-    public static final boolean isImmediateMode = true;
+    public static final boolean isImmediateMode = false;
     
     public static final int WIDTH = 1280;
     public static final int HEIGHT = 800;
@@ -139,14 +139,16 @@ public class GorskE {
         
      
         // Now set the projection matrix to orthographic projection
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        // Now set the modelview matrix
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
+        if(isImmediateMode) {
+	        glMatrixMode(GL_PROJECTION);
+	        glLoadIdentity();
+	        // Now set the modelview matrix
+	        glMatrixMode(GL_MODELVIEW);
+	        glLoadIdentity();
+        }
 		
         // Clears color buffers and gives us a nice color background.
-		glClearColor(0.1f, 0.3f, 0.5f, 0.0f);
+		glClearColor(0.5f, 0.3f, 0.5f, 0.0f);
 		// Enables depth testing which will be important to make sure
 		// triangles are not rendering in front of each other when they
 		// shouldn't be.
@@ -158,7 +160,7 @@ public class GorskE {
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
        // glEnable(GL_CULL_FACE);
        // glCullFace(GL_BACK);
-        glEnable(GL_FOG);
+        //glEnable(GL_FOG);
 		// Prints out the current OpenGL version to the console.
 		System.out.println("OpenGL: " + glGetString(GL_VERSION));
     }
@@ -174,7 +176,7 @@ public class GorskE {
         //XXX testing the rendering with this code
         
     	
-        currentScene = new GameScene(new MoveableCamera(0,0,0));
+        currentScene = new GameScene(new MoveableCamera(0,0,-0.1f));
         
         //XXX testing!
  
@@ -182,7 +184,51 @@ public class GorskE {
         physicsEngine = new PhysicsEngine(currentScene);
         //new Thread(physicsEngine).start(); //starts the other thread XXX
         
-    } 
+    	float[] vertices = {
+                -0.01f, 0f, 0.01f,
+                -0.01f, 0f, -0.01f,
+                0.01f, 0f, 0.01f,
+                0.01f, 0f, -0.01f,
+                0f, 0.02f, 0f,
+        };
+        float[] colors = {
+                0f, 0f, 1f, 1f,
+                0f, 0f, 1f, 1f,
+                0f, 0f, 1f, 1f,
+                0f, 0f, 1f, 1f,
+                0f, 0f, 1f, 1f,
+        };
+        float[] normals = {
+				1f, 1f, 1f,
+				1f, 1f, 1f,
+				1f, 1f, 1f,
+				1f, 1f, 1f,
+				1f, 1f, 1f
+		};
+		float[] textureCoords = {
+				0, 0,
+				1, 0,
+				1, 1,
+				0, 1,
+				1, 1,
+		};
+        byte[] indices = {
+                0, 1, 3,
+                3, 2, 0,
+                0, 1, 4,
+                1, 3, 4,
+                2, 3, 4,
+                0, 2, 4,
+        };
+    	
+        Random rand = new Random();
+        for(int i=0; i<100; i++){
+        	GameObject tempT = new GameObject(((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f))/2,((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f))/2,((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f))/2);
+        	tempT.addComponents(new RenderStaticColorOnly(tempT, vertices, colors, indices));
+        }
+    	
+        
+    }
     
     /**
      * This is the main looping function responsible for running the game
@@ -195,52 +241,9 @@ public class GorskE {
         	currentScene.update(); //calls the update function on the whole scene
         	
         	currentScene.render(); //calls the update function on all the renderComponents in the scene
-        		
-        	//GL11.glRotatef(2f, -1f, -1f, 1f);//XXX test draw to see if working engine!
-        	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//XXX
-        	
-        	float[] vertices = {
-	                -0.01f, 0f, 0.01f,
-	                -0.01f, 0f, -0.01f,
-	                0.01f, 0f, 0.01f,
-	                0.01f, 0f, -0.01f,
-	                0f, 0.02f, 0f,
-	        };
-	        float[] colors = {
-	                0f, 0f, 1f, 1f,
-	                0f, 0f, 1f, 1f,
-	                0f, 0f, 1f, 1f,
-	                0f, 0f, 1f, 1f,
-	                0f, 0f, 1f, 1f,
-	        };
-	        float[] normals = {
-					1f, 1f, 1f,
-					1f, 1f, 1f,
-					1f, 1f, 1f,
-					1f, 1f, 1f,
-					1f, 1f, 1f
-			};
-			float[] textureCoords = {
-					0, 0,
-					1, 0,
-					1, 1,
-					0, 1,
-					1, 1,
-			};
-	        byte[] indices = {
-	                0, 1, 3,
-	                3, 2, 0,
-	                0, 1, 4,
-	                1, 3, 4,
-	                2, 3, 4,
-	                0, 2, 4,
-	        };
-        	
-        	Random rand = new Random();
-            for(int i=0; i<2; i++){
-            	GameObject tempT = new GameObject((rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f),(rand.nextFloat()-0.5f)+(rand.nextFloat()-0.5f));
-                tempT.addComponents(new RenderStaticColorOnly(tempT, vertices, colors, indices));
-            }
+            
+            //GameObject tempT = new GameObject(1,1,1);
+           // tempT.addComponents(new RenderStaticColorOnly(tempT, vertices, colors, indices));
         	
         	calcFPS(); //Shows the FPS and number of GameObjects in the window's title        	
             glfwPollEvents(); // Poll for window events. The key callback above will only be invoked during this call.
@@ -297,7 +300,7 @@ public class GorskE {
     			String fpsString = Double.toString(fps);
 
     			// Append the FPS value to the window title details
-    			theWindowTitle += (" | FPS: " + fpsString + " | GameObjects: " + currentScene.getGameObjects().size());
+    			theWindowTitle += (" | FPS: " + fpsString + " | GameObjects: " + currentScene.getGameObjects().size() + " | Camera: " + currentScene.camera.getX() + " " + currentScene.camera.getY() + " " + currentScene.camera.getZ() + " ");
 
     			// Convert the new window title to a c_str and set it
     			GLFW.glfwSetWindowTitle(window, theWindowTitle);

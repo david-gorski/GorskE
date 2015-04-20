@@ -323,11 +323,12 @@ public class VAO {
 		//-- Upload matrices
 		// Grab matrices
 		Matrix4f viewMatrix = GorskE.engine.currentScene.camera.getView();
-		Matrix4f projectionMatrix = GorskE.engine.currentScene.camera.getView();
+		Matrix4f projectionMatrix = GorskE.engine.currentScene.camera.getProjection();
 		Matrix4f modelMatrix = getModelMatrix();
-		Matrix4f MVP = projectionMatrix.multiply(viewMatrix).multiply(modelMatrix);
+		FloatBuffer MVP = projectionMatrix.multiply(viewMatrix).multiply(modelMatrix).toFloatBuffer();
+
 		// Upload matrices to the uniform variables
-		glUniformMatrix4fv(shader.getUniform("MVP"), false, MVP.toFloatBuffer());
+		glUniformMatrix4fv(shader.getUniform("MVP"), false, MVP);
 		
 		//sets the current program to be used
 		GL20.glUseProgram(0);
